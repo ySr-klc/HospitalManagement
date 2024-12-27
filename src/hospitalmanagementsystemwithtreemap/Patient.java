@@ -22,7 +22,7 @@ public class Patient extends Person {
         patientAppoinments = new LinkedList();        
         notifications=new Stack<>();
     }
-   public void addNotfication(String notification){
+   public void addNotification(String notification){
         notifications.push(notification);
     }
 //    
@@ -49,7 +49,7 @@ public class Patient extends Person {
        return null;
     }
 
-    public List<AppointmentSlot> getPatientAppoinments() {
+    public List<AppointmentSlot> getPatientAppointments() {
         return patientAppoinments;
     }
      

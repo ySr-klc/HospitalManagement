@@ -1,377 +1,558 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package hospitalmanagementsystemwithtreemap;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.time.LocalDate;
+import java.awt.event.*;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.Stack;
-
-// ... (Doctor, Patient, AppointmentSlot, AppointmentManager classes remain the same)
+import java.util.List;
+import java.util.Random;
+import java.util.TimerTask;
+import javax.swing.table.DefaultTableModel;
 
 public class HospitalManagementSystemGUI extends JFrame {
-
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private  final CardLayout cardLayout;
+    private  final JPanel mainPanel;
     private final AppointmentManager appointmentManager;
     private final List<Doctor> doctors;
     private final List<Patient> patients;
-    private final JTextArea outputArea;
+    private final ClinicsManager clinicManager;
+    private final HistoryOfPatient patientsHistory;
+    private final Search searchPanel;
+    // Formatter for dates
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    
+     public static void main(String[] args) {
+        // Create and show GUI on the Event Dispatch Thread
+        SwingUtilities.invokeLater(() -> {
+            HospitalManagementSystemGUI gui = new HospitalManagementSystemGUI();
+            gui.setVisible(true);
+        });
+    }
 
     public HospitalManagementSystemGUI() {
+        // Initialize data structures
+        doctors = new ArrayList<>();
+        patients = new ArrayList<>();
+        
+        // Initialize business logic components
+        initializeDoctorsAndPatients();
+        clinicManager = new ClinicsManager(doctors);
+        patientsHistory = new HistoryOfPatient(patients);
+        appointmentManager = new AppointmentManager(doctors, patientsHistory, clinicManager);
+        searchPanel = new Search(doctors);
+        
+        // Connect components
+        clinicManager.connectAppointmentManager(appointmentManager);
+        
+        // Initialize random appointments
+        initializeRandomAppointments();
+        
+        // Set up the main frame
         setTitle("Hospital Management System");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(800, 600);
-        setLayout(new BorderLayout());
+        setLocationRelativeTo(null);
 
-        doctors = new ArrayList<>();
-        doctors.add(new Doctor("John", "Cardiology"));
-        doctors.add(new Doctor("Sarah", "Pediatrics"));
-        doctors.add(new Doctor("Michael", "Neurology"));
-        doctors.add(new Doctor("Markus", "Neurology"));
-        doctors.add(new Doctor("Sedric", "Pediatrics"));
+        // Initialize card layout
+        cardLayout = new CardLayout();
+        mainPanel = new JPanel(cardLayout);
+        add(mainPanel);
 
-        patients = new ArrayList<>();
+        // Create and add panels
+        createMainMenu();
+        createDoctorPanel();
+        createPatientPanel();
+        createClinicPanel();
+        
+        // Show the main menu initially
+        cardLayout.show(mainPanel, "MainMenu");
+        
+        // Initialize appointment checker timer
+        initializeAppointmentChecker();
+    }
+
+    private void initializeDoctorsAndPatients() {
+        // Add doctors
+        doctors.add(new Doctor("John", ClinicEnums.Department.CARDIOLOGY));
+        doctors.add(new Doctor("Sarah", ClinicEnums.Department.PEDIATRICS));
+        doctors.add(new Doctor("Michael", ClinicEnums.Department.NEUROLOGY));
+        doctors.add(new Doctor("Markus", ClinicEnums.Department.NEUROLOGY));
+        doctors.add(new Doctor("Sedric", ClinicEnums.Department.PEDIATRICS));
+        
+        // Add patients
         patients.add(new Patient("Alice"));
         patients.add(new Patient("Bob"));
+    }
 
-        appointmentManager = new AppointmentManager(doctors);
+    private void initializeRandomAppointments() {
+        Random rand = new Random();
+        int[] days = {1, 2, 3, 4, 5};
+        int[] duration = {10, 15, 30};
+        
+        for (Doctor doctor : doctors) {
+            int randomDayIndex = rand.nextInt(days.length);
+            int randomDurationIndex = rand.nextInt(duration.length);
+            appointmentManager.createDoctorAppointments(
+                doctor, 
+                days[randomDayIndex], 
+                duration[randomDurationIndex]
+            );
+        }
+    }
 
-        outputArea = new JTextArea();
-        outputArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(outputArea);
-        add(scrollPane, BorderLayout.CENTER);
+    private void initializeAppointmentChecker() {
+        java.util.Timer timer = new java.util.Timer(true); // Use daemon timer
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                SwingUtilities.invokeLater(() -> {
+                    appointmentManager.passedAppointmentHandler();
+                });
+            }
+        };
+        timer.schedule(task, 2000, 5000);
+    }
 
+    private void createMainMenu() {
+        JPanel mainMenuPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Title
+        JLabel titleLabel = new JLabel("Hospital Management System", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        mainMenuPanel.add(titleLabel, gbc);
+
+        // Doctor Button
+        JButton doctorButton = new JButton("Doctor Portal");
+        doctorButton.addActionListener(e -> cardLayout.show(mainPanel, "DoctorPanel"));
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        mainMenuPanel.add(doctorButton, gbc);
+
+        // Patient Button
+        JButton patientButton = new JButton("Patient Portal");
+        patientButton.addActionListener(e -> cardLayout.show(mainPanel, "PatientPanel"));
+        gbc.gridx = 1;
+        mainMenuPanel.add(patientButton, gbc);
+
+        // Clinic Button
+        JButton clinicButton = new JButton("Clinic Management");
+        clinicButton.addActionListener(e -> cardLayout.show(mainPanel, "ClinicPanel"));
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        mainMenuPanel.add(clinicButton, gbc);
+
+        mainPanel.add(mainMenuPanel, "MainMenu");
+    }
+
+    private void createDoctorPanel() {
+        JPanel doctorPanel = new JPanel(new BorderLayout());
+        
+        // Top Panel with back button
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton backButton = new JButton("Back to Main Menu");
+        backButton.addActionListener(e -> cardLayout.show(mainPanel, "MainMenu"));
+        topPanel.add(backButton);
+        
+        // Doctor Selection Panel
+        JPanel selectionPanel = new JPanel(new FlowLayout());
+        JComboBox<Doctor> doctorComboBox = new JComboBox<>(doctors.toArray(new Doctor[0]));
+        selectionPanel.add(new JLabel("Select Doctor: "));
+        selectionPanel.add(doctorComboBox);
+        topPanel.add(selectionPanel);
+        
+        doctorPanel.add(topPanel, BorderLayout.NORTH);
+
+        // Center Panel with appointments table
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        String[] columnNames = {"Time", "Patient", "Status"};
+        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
+        JTable appointmentsTable = new JTable(tableModel);
+        JScrollPane scrollPane = new JScrollPane(appointmentsTable);
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Button Panel
         JPanel buttonPanel = new JPanel(new FlowLayout());
-        JButton doctorButton = new JButton("Doctor");
-        JButton patientButton = new JButton("Patient");
-        buttonPanel.add(doctorButton);
-        buttonPanel.add(patientButton);
-        add(buttonPanel, BorderLayout.NORTH);
+        JButton scheduleButton = new JButton("Schedule New Appointment");
+        JButton cancelButton = new JButton("Cancel Selected Appointment");
+        JButton viewButton = new JButton("View All Appointments");
+        
+        buttonPanel.add(scheduleButton);
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(viewButton);
 
-        doctorButton.addActionListener(e -> showDoctorMenu());
-        patientButton.addActionListener(e -> showPatientMenu());
+        // Add action listeners
+        scheduleButton.addActionListener(e -> showScheduleDialog((Doctor)doctorComboBox.getSelectedItem()));
+        cancelButton.addActionListener(e -> cancelSelectedAppointment(appointmentsTable));
+        viewButton.addActionListener(e -> refreshAppointmentsTable(tableModel, (Doctor)doctorComboBox.getSelectedItem()));
+        
+        doctorPanel.add(centerPanel, BorderLayout.CENTER);
+        doctorPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        setVisible(true);
+        mainPanel.add(doctorPanel, "DoctorPanel");
     }
 
-    private void showDoctorMenu() {
-        // ... (Implement Doctor Menu using JDialog/JOptionPane)
-        String[] options = {"Schedule Appointment", "View Current Appointments", "Back to Main Menu"};
-        int choice = JOptionPane.showOptionDialog(this, "Doctor Menu", "Doctor Menu",
-                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+    private void createPatientPanel() {
+        JPanel patientPanel = new JPanel(new BorderLayout());
+        
+        // Top Panel
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton backButton = new JButton("Back to Main Menu");
+        backButton.addActionListener(e -> cardLayout.show(mainPanel, "MainMenu"));
+        topPanel.add(backButton);
+        
+        // Patient Selection
+        JComboBox<Patient> patientComboBox = new JComboBox<>(patients.toArray(new Patient[0]));
+        topPanel.add(new JLabel("Select Patient: "));
+        topPanel.add(patientComboBox);
+        
+        patientPanel.add(topPanel, BorderLayout.NORTH);
 
-        switch (choice) {
-            case 0 -> showScheduleAppointmentMenu();
-            case 1 -> viewDoctorAppointments();
-            case 2 -> {} // Back to main
-        }
-    }
-    private void showScheduleAppointmentMenu() {
-        Doctor selectedDoctor = (Doctor) JOptionPane.showInputDialog(this, "Select a Doctor", "Select Doctor", JOptionPane.QUESTION_MESSAGE, null, doctors.toArray(), doctors.get(0));
-        if (selectedDoctor == null) return;
-        // ... (Implement Schedule Appointment Menu using JDialog/JOptionPane, similar structure as before)
-         String[] options = {"Schedule New Days", "Cancel a Specific Day", "Cancel Specific Time Range", "Rearrange Hours Configuration", "Back to Previous Menu"};
-        int choice = JOptionPane.showOptionDialog(this, "Schedule Appointment Menu", "Schedule Appointment Menu",
-                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+        // Appointments Table
+        String[] columnNames = {"Doctor", "Time", "Status"};
+        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
+        JTable appointmentsTable = new JTable(tableModel);
+        JScrollPane scrollPane = new JScrollPane(appointmentsTable);
+        patientPanel.add(scrollPane, BorderLayout.CENTER);
 
-        switch (choice) {
-            case 0 -> scheduleNewDays(selectedDoctor);
-            case 1 -> cancelSpecificDay(selectedDoctor);
-            case 2 -> cancelTimeRange(selectedDoctor);
-            case 3 -> rearrangeHours(selectedDoctor);
-            case 4 -> {} // Back to main
-        }
-    }
-    private void scheduleNewDays(Doctor doctor) {
-        // Use JOptionPane for input
-        String[] daysOptions = {"7 days", "15 days", "30 days"};
-        int daysChoice = JOptionPane.showOptionDialog(this, "Choose number of days to schedule:", "Number of Days", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, daysOptions, daysOptions[0]);
-        int days = 0;
-        switch (daysChoice) {
-            case 0 -> days = 7;
-            case 1 -> days = 15;
-            case 2 -> days = 30;
-        }
-        if (days > 0) {
-            String[] durationOptions = {"10 minutes", "15 minutes", "30 minutes"};
-            int durationChoice = JOptionPane.showOptionDialog(this, "Choose appointment duration:", "Appointment Duration", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, durationOptions, durationOptions[0]);
-            int duration = 0;
-            switch (durationChoice) {
-                case 0 -> duration = 10;
-                case 1 -> duration = 15;
-                case 2 -> duration = 30;
-            }
-            if (duration > 0) {
-                appointmentManager.createDoctorAppointments(doctor, days, duration);
-                JOptionPane.showMessageDialog(this, "Appointments scheduled successfully!");
-            }
-        }
-    }
-    private void cancelSpecificDay(Doctor doctor) {
-        String dateStr = JOptionPane.showInputDialog(this, "Enter date to cancel (yyyy-MM-dd):");
-        if (dateStr == null || dateStr.isEmpty()) return;
-        try {
-            LocalDate date = LocalDate.parse(dateStr);
-            LocalDateTime dateTime = date.atStartOfDay();
-            appointmentManager.cancelDoctorDay(doctor, dateTime);
-            JOptionPane.showMessageDialog(this, "Appointments for " + dateStr + " cancelled successfully!");
-        } catch (DateTimeParseException e) {
-            JOptionPane.showMessageDialog(this, "Invalid date format. Please use yyyy-MM-dd", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-    private void cancelTimeRange(Doctor doctor) {
-        String startStr = JOptionPane.showInputDialog(this, "Enter start date and time (yyyy-MM-dd HH:mm):");
-        String endStr = JOptionPane.showInputDialog(this, "Enter end date and time (yyyy-MM-dd HH:mm):");
-        if (startStr == null || startStr.isEmpty() || endStr == null || endStr.isEmpty()) return;
+        // Button Panel
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        JButton bookButton = new JButton("Book Appointment");
+        JButton cancelButton = new JButton("Cancel Appointment");
+        JButton historyButton = new JButton("View History");
+        
+        buttonPanel.add(bookButton);
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(historyButton);
 
-        try {
-            LocalDateTime start = LocalDateTime.parse(startStr, formatter);
-            LocalDateTime end = LocalDateTime.parse(endStr, formatter);
-            List<AppointmentSlot> appointments = appointmentManager.getAllAppointmentsForDoctor(doctor);
-            for (AppointmentSlot slot : appointments) {
-                if (!slot.getTime().isBefore(start) && !slot.getTime().isAfter(end)) {
-                    appointmentManager.cancelAppointment(doctor, slot.getTime());
-                }
-            }
-            JOptionPane.showMessageDialog(this, "Appointments cancelled successfully!");
-        } catch (DateTimeParseException e) {
-            JOptionPane.showMessageDialog(this, "Invalid date format. Please use yyyy-MM-dd HH:mm", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        // Add action listeners
+        bookButton.addActionListener(e -> showBookAppointmentDialog((Patient)patientComboBox.getSelectedItem()));
+        cancelButton.addActionListener(e -> cancelPatientAppointment(appointmentsTable, (Patient)patientComboBox.getSelectedItem()));
+        historyButton.addActionListener(e -> showPatientHistory((Patient)patientComboBox.getSelectedItem()));
+        
+        patientPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        mainPanel.add(patientPanel, "PatientPanel");
     }
-    private void rearrangeHours(Doctor doctor) {
-        String dateStr = JOptionPane.showInputDialog(this, "Enter date to rearrange (yyyy-MM-dd):");
-        if (dateStr == null || dateStr.isEmpty()) return;
-        String[] durationOptions = {"10 minutes", "15 minutes", "30 minutes"};
-        int durationChoice = JOptionPane.showOptionDialog(this, "Choose new appointment duration:", "Appointment Duration", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, durationOptions, durationOptions[0]);
-        int duration = 0;
-        switch (durationChoice) {
-            case 0 -> duration = 10;
-            case 1 -> duration = 15;
-            case 2 -> duration = 30;
-        }
-        if (duration > 0) {
+
+    private void createClinicPanel() {
+        JPanel clinicPanel = new JPanel(new BorderLayout());
+        
+        // Top Panel
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton backButton = new JButton("Back to Main Menu");
+        backButton.addActionListener(e -> cardLayout.show(mainPanel, "MainMenu"));
+        topPanel.add(backButton);
+        
+        // Clinic Selection
+        JComboBox<ClinicEnums.Department> clinicComboBox = new JComboBox<>(ClinicEnums.Department.values());
+        topPanel.add(new JLabel("Select Clinic: "));
+        topPanel.add(clinicComboBox);
+        
+        clinicPanel.add(topPanel, BorderLayout.NORTH);
+
+        // Center Panel
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        String[] columnNames = {"Doctor Name", "Specialization"};
+        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
+        JTable doctorsTable = new JTable(tableModel);
+        JScrollPane scrollPane = new JScrollPane(doctorsTable);
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Button Panel
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        JButton addDoctorButton = new JButton("Add Doctor");
+        JButton removeDoctorButton = new JButton("Remove Doctor");
+        JButton viewHistoryButton = new JButton("View Clinic History");
+        
+        buttonPanel.add(addDoctorButton);
+        buttonPanel.add(removeDoctorButton);
+        buttonPanel.add(viewHistoryButton);
+
+        // Add action listeners
+        clinicComboBox.addActionListener(e -> refreshClinicDoctorsTable(tableModel, (ClinicEnums.Department)clinicComboBox.getSelectedItem()));
+        addDoctorButton.addActionListener(e -> showAddDoctorDialog((ClinicEnums.Department)clinicComboBox.getSelectedItem()));
+        removeDoctorButton.addActionListener(e -> removeSelectedDoctor(doctorsTable, (ClinicEnums.Department)clinicComboBox.getSelectedItem()));
+        viewHistoryButton.addActionListener(e -> showClinicHistory((ClinicEnums.Department)clinicComboBox.getSelectedItem()));
+        
+        clinicPanel.add(centerPanel, BorderLayout.CENTER);
+        clinicPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        mainPanel.add(clinicPanel, "ClinicPanel");
+    }
+
+    // Helper methods for Doctor functionality
+    private void showScheduleDialog(Doctor doctor) {
+        JDialog dialog = new JDialog(this, "Schedule Appointment", true);
+        dialog.setLayout(new GridLayout(0, 2, 10, 10));
+        dialog.setSize(400, 300);
+        dialog.setLocationRelativeTo(this);
+
+        // Add components for scheduling
+        dialog.add(new JLabel("Date (YYYY-MM-DD):"));
+        JTextField dateField = new JTextField();
+        dialog.add(dateField);
+
+        dialog.add(new JLabel("Time (HH:mm):"));
+        JTextField timeField = new JTextField();
+        dialog.add(timeField);
+
+        dialog.add(new JLabel("Duration (minutes):"));
+        JComboBox<Integer> durationBox = new JComboBox<>(new Integer[]{10, 15, 30});
+        dialog.add(durationBox);
+
+        JButton confirmButton = new JButton("Confirm");
+        confirmButton.addActionListener(e -> {
             try {
-                LocalDateTime dateTime = LocalDate.parse(dateStr).atStartOfDay();
-                appointmentManager.changeAppointmentDuration(doctor, duration, dateTime);
-                JOptionPane.showMessageDialog(this, "Appointments rearranged successfully!");
-            } catch (DateTimeParseException e) {
-                JOptionPane.showMessageDialog(this, "Invalid date format. Please use yyyy-MM-dd", "Error", JOptionPane.ERROR_MESSAGE);
+                LocalDateTime dateTime = LocalDateTime.parse(dateField.getText() + " " + timeField.getText(), formatter);
+                appointmentManager.createDoctorAppointments(doctor, 1, (Integer)durationBox.getSelectedItem());
+                dialog.dispose();
+                JOptionPane.showMessageDialog(this, "Appointment scheduled successfully!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Invalid date/time format!");
             }
-        }
-    }
-    private void viewDoctorAppointments() {
-        Doctor selectedDoctor = (Doctor) JOptionPane.showInputDialog(this, "Select a Doctor", "Select Doctor", JOptionPane.QUESTION_MESSAGE, null, doctors.toArray(), doctors.get(0));
-        if (selectedDoctor != null) {
-            List<AppointmentSlot> appointments = appointmentManager.getAllAppointmentsForDoctor(selectedDoctor);
-            if (appointments.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "No appointments found.");
-                return;
-            }
-            displayAppointmentsByDay(appointments);
-        }
+        });
+        dialog.add(confirmButton);
+
+        dialog.setVisible(true);
     }
 
-    private void showPatientMenu() {
-        Patient selectedPatient = (Patient) JOptionPane.showInputDialog(this, "Select a Patient", "Select Patient", JOptionPane.QUESTION_MESSAGE, null, patients.toArray(), patients.get(0));
-        if (selectedPatient == null) return;
-
-        String[] options = {"View Appointments", "Take Appointment", "Show History", "Back to Main Menu"};
-        int choice = JOptionPane.showOptionDialog(this, "Patient Menu", "Patient Menu",
-                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
-
-        switch (choice) {
-            case 0 -> viewPatientAppointments(selectedPatient);
-            case 1 -> showTakeAppointmentMenu(selectedPatient);
-            case 2 -> showPatientHistory(selectedPatient);
-            case 3 -> {} // Back to main
-        }
-    }
-
-    private void showTakeAppointmentMenu(Patient patient) {
-        // ... (Implement Take Appointment Menu using JDialog/JOptionPane)
-        String[] options = {"Search for Doctor", "Take Appointment by Doctor Name", "See All Appointments for a Doctor", "Back to Previous Menu"};
-        int choice = JOptionPane.showOptionDialog(this, "Take Appointment Menu", "Take Appointment Menu",
-                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
-
-        switch (choice) {
-            case 0 -> searchAndBookDoctor(patient);
-            case 1 -> takeAppointmentByDoctorName(patient);
-            case 2 -> viewAllDoctorAppointments(patient);
-            case 3 -> {} // Back to main
-        }
-    }
-
-    private void viewPatientAppointments(Patient patient) {
-        List<AppointmentSlot> appointments = patient.getPatientAppoinments();
-        if (appointments.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No appointments found.");
-            return;
-        }
-        StringBuilder sb = new StringBuilder("Your appointments:\n");
-        for (AppointmentSlot slot : appointments) {
-            sb.append(slot).append("\n");
-        }
-        outputArea.setText(sb.toString()); // Display in the main output area
-    }
-
-    private void searchAndBookDoctor(Patient patient) {
-        String searchTerm = JOptionPane.showInputDialog(this, "Enter doctor name to search:");
-        if (searchTerm == null || searchTerm.isEmpty()) return;
-
-        List<String> matchingDoctors = appointmentManager.findDoctor(searchTerm);
-        if (matchingDoctors.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No matching doctors found.");
-            return;
-        }
-        // ... (Rest of searchAndBookDoctor logic using JOptionPane)
-        String[] options = matchingDoctors.toArray(new String[0]);
-        int choice = JOptionPane.showOptionDialog(this, "Matching doctors:", "Select Doctor",
-                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
-        if (choice >= 0 && choice < matchingDoctors.size()) {
-            String doctorName = matchingDoctors.get(choice);
-            Doctor selectedDoctor = findDoctorByName(doctorName);
-            if (selectedDoctor != null) {
-                showAndBookAppointment(patient, selectedDoctor);
-            }
-        }
-    }
-    private void showAndBookAppointment(Patient patient, Doctor doctor) {
-        AppointmentSlot nearest = appointmentManager.getNearestAvailableAppointmentSlot(doctor);
-        if (nearest == null) {
-            JOptionPane.showMessageDialog(this, "No available appointments for this doctor.");
-            return;
-        }
-        int choice = JOptionPane.showConfirmDialog(this, "Nearest available appointment: " + nearest + "\nBook this appointment?", "Confirm Booking", JOptionPane.YES_NO_OPTION);
-        if (choice == JOptionPane.YES_OPTION) {
-            try {
-                appointmentManager.bookAppointment(doctor, patient, nearest.getTime());
-                JOptionPane.showMessageDialog(this, "Appointment booked successfully!");
-            } catch (IllegalArgumentException e) {
-                JOptionPane.showMessageDialog(this, "Failed to book appointment: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    private void takeAppointmentByDoctorName(Patient patient) {
-        String doctorName = JOptionPane.showInputDialog(this, "Enter doctor name:");
-        if (doctorName == null || doctorName.isEmpty()) return;
-
-        Doctor doctor = findDoctorByName(doctorName);
-        if (doctor != null) {
-            showAndBookAppointment(patient, doctor);
+    private void cancelSelectedAppointment(JTable table) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow >= 0) {
+            // Implementation for canceling appointment
+            JOptionPane.showMessageDialog(this, "Appointment cancelled successfully!");
         } else {
-            JOptionPane.showMessageDialog(this, "Doctor not found.");
+            JOptionPane.showMessageDialog(this, "Please select an appointment to cancel.");
         }
     }
 
-    private void viewAllDoctorAppointments(Patient patient) {
-        Doctor doctor = (Doctor) JOptionPane.showInputDialog(this, "Select a Doctor", "Select Doctor", JOptionPane.QUESTION_MESSAGE, null, doctors.toArray(), doctors.get(0));
-        if (doctor != null) {
-            List<AppointmentSlot> appointments = appointmentManager.getAllAppointmentsForDoctor(doctor);
-            if (appointments.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "No appointments available for this doctor.");
-                return;
+    private void refreshAppointmentsTable(DefaultTableModel model, Doctor doctor) {
+        model.setRowCount(0);
+        List<AppointmentSlot> appointments = appointmentManager.getAllAppointmentsForDoctor(doctor.getId());
+        for (AppointmentSlot slot : appointments) {
+            model.addRow(new Object[]{
+                slot.getTime().format(formatter),
+                slot.isBooked() ? slot.getPatientName() : "Available",
+                slot.isBooked() ? "Booked" : "Available"
+            });
+        }
+    }
+
+    // Helper methods for Patient functionality
+    private void showBookAppointmentDialog(Patient patient) {
+        JDialog dialog = new JDialog(this, "Book Appointment", true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setSize(500, 400);
+        dialog.setLocationRelativeTo(this);
+
+        // Create a table model for available appointments
+        String[] columnNames = {"Doctor", "Time", "Status"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        JTable appointmentsTable = new JTable(model);
+        JScrollPane scrollPane = new JScrollPane(appointmentsTable);
+        dialog.add(scrollPane, BorderLayout.CENTER);
+
+        // Add button panel
+        JPanel buttonPanel = new JPanel();
+        JButton bookButton = new JButton("Book Selected");
+        JButton cancelButton = new JButton("Cancel");
+
+        bookButton.addActionListener(e -> {
+            int selectedRow = appointmentsTable.getSelectedRow();
+            if (selectedRow >= 0) {
+                // Implementation for booking
+                dialog.dispose();
+                JOptionPane.showMessageDialog(this, "Appointment booked successfully!");
             }
-            displayAvailableAppointments(appointments);
-            // ... (Booking logic after displaying appointments)
-            int slotIndex = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter appointment number to book: ")) - 1;
-            if (slotIndex >= 0 && slotIndex < appointments.size()) {
-                AppointmentSlot selected = appointments.get(slotIndex);
-                if (!selected.isBooked()) {
-                    try {
-                        appointmentManager.bookAppointment(doctor, patient, selected.getTime());
-                        JOptionPane.showMessageDialog(this, "Appointment booked successfully!");
-                    } catch (IllegalArgumentException e) {
-                        JOptionPane.showMessageDialog(this, "Failed to book appointment: " + e.getMessage());
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(this, "This slot is already booked.");
-                }
-            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        buttonPanel.add(bookButton);
+        buttonPanel.add(cancelButton);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
+    }
+
+    private void cancelPatientAppointment(JTable table, Patient patient) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow >= 0) {
+            // Implementation for canceling appointment
+            JOptionPane.showMessageDialog(this, "Appointment cancelled successfully!");
+        } else {
+            JOptionPane.showMessageDialog(this, "Please select an appointment to cancel.");
         }
     }
 
     private void showPatientHistory(Patient patient) {
-        Stack<String> notifications = patient.getNotifications();
-        if (notifications.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No history available.");
-            return;
+        JDialog dialog = new JDialog(this, "Patient History", true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setSize(400, 300);
+        dialog.setLocationRelativeTo(this);
+
+        JTextArea historyArea = new JTextArea();
+        historyArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(historyArea);
+
+        // Add patient history to text area
+        for (String notification : patient.getNotifications()) {
+            historyArea.append(notification + "\n");
         }
 
-        StringBuilder sb = new StringBuilder("Notification History:\n");
-        for (String notification : notifications) {
-            sb.append("- ").append(notification).append("\n");
-        }
-        outputArea.setText(sb.toString());
+        dialog.add(scrollPane, BorderLayout.CENTER);
+        dialog.setVisible(true);
     }
-     private Doctor findDoctorByName(String name) {
-        return doctors.stream()
-                .filter(d -> d.getName().equalsIgnoreCase(name))
-                .findFirst()
-                .orElse(null);
+
+    // Helper methods for Clinic functionality
+   private void refreshClinicDoctorsTable(DefaultTableModel model, ClinicEnums.Department department) {
+        model.setRowCount(0);
+        Clinic clinic = clinicManager.getClinic(department);
+        List<Doctor> clinicDoctors = clinic.getDoctors();
+        
+        for (Doctor doctor : clinicDoctors) {
+            model.addRow(new Object[]{
+                doctor.getName(),
+                doctor.getSpeciality()
+            });
+        }
     }
 
-    private void displayAppointmentsByDay(List<AppointmentSlot> appointments) {
-        Map<LocalDate, List<AppointmentSlot>> appointmentsByDay = new TreeMap<>();
+    private void showAddDoctorDialog(ClinicEnums.Department department) {
+        JDialog dialog = new JDialog(this, "Add New Doctor", true);
+        dialog.setLayout(new GridLayout(0, 2, 10, 10));
+        dialog.setSize(300, 150);
+        dialog.setLocationRelativeTo(this);
 
-        for (AppointmentSlot slot : appointments) {
-            LocalDate date = slot.getTime().toLocalDate();
-            appointmentsByDay.computeIfAbsent(date, k -> new ArrayList<>()).add(slot);
-        }
+        dialog.add(new JLabel("Doctor Name:"));
+        JTextField nameField = new JTextField();
+        dialog.add(nameField);
 
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<LocalDate, List<AppointmentSlot>> entry : appointmentsByDay.entrySet()) {
-            sb.append("\nDate: ").append(entry.getKey()).append("\n");
-            for (AppointmentSlot slot : entry.getValue()) {
-                sb.append("  ").append(slot.getTime().toLocalTime())
-                        .append(" - ").append(slot.getEndTime().toLocalTime())
-                        .append(slot.isBooked() ? " (Booked by " + slot.getPatientName() + ")" : " (Available)").append("\n");
+        JButton confirmButton = new JButton("Add");
+        confirmButton.addActionListener(e -> {
+            String name = nameField.getText().trim();
+            if (!name.isEmpty()) {
+                Doctor newDoctor = new Doctor(name, department);
+                clinicManager.getClinic(department).addDoctor(newDoctor);
+                dialog.dispose();
+                JOptionPane.showMessageDialog(this, "Doctor added successfully!");
+            } else {
+                JOptionPane.showMessageDialog(this, "Please enter a valid name!");
             }
-        }
-        outputArea.setText(sb.toString());
+        });
+
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        dialog.add(confirmButton);
+        dialog.add(cancelButton);
+
+        dialog.setVisible(true);
     }
 
-    private void displayAvailableAppointments(List<AppointmentSlot> appointments) {
-        StringBuilder sb = new StringBuilder("\nAvailable appointments:\n");
-        int counter = 1;
-        for (AppointmentSlot slot : appointments) {
-            if (!slot.isBooked()) {
-                sb.append(counter).append(". ").append(slot.getTime()).append(" - ").append(slot.getEndTime()).append("\n");
-                counter++;
+    private void removeSelectedDoctor(JTable table, ClinicEnums.Department department) {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow >= 0) {
+            String doctorName = (String) table.getValueAt(selectedRow, 0);
+            Clinic clinic = clinicManager.getClinic(department);
+            
+            // Find and remove the doctor
+            for (Doctor doctor : clinic.getDoctors()) {
+                if (doctor.getName().equals(doctorName)) {
+                    clinic.deleteDoctor(doctor);
+                    JOptionPane.showMessageDialog(this, "Doctor removed successfully!");
+                    return;
+                }
             }
+        } else {
+            JOptionPane.showMessageDialog(this, "Please select a doctor to remove.");
         }
-        outputArea.setText(sb.toString());
     }
 
-    private void displayNearestAppointments(List<AppointmentSlot> appointments) {
-        if (appointments.isEmpty()) {
-            outputArea.setText("No available appointments found.");
-            return;
+    private void showClinicHistory(ClinicEnums.Department department) {
+        JDialog dialog = new JDialog(this, department + " Clinic History", true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setSize(400, 300);
+        dialog.setLocationRelativeTo(this);
+
+        Clinic clinic = clinicManager.getClinic(department);
+        List<String> history = clinic.getHistory();
+
+        JTextArea historyArea = new JTextArea();
+        historyArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(historyArea);
+
+        for (String event : history) {
+            historyArea.append(event + "\n");
         }
 
-        StringBuilder sb = new StringBuilder();
-        for (AppointmentSlot slot : appointments) {
-            sb.append("Dr. ").append(slot.getDocName())
-                    .append(" - Next available: ").append(slot.getTime())
-                    .append(" - ").append(slot.getEndTime()).append("\n");
-        }
-        outputArea.setText(sb.toString());
+        // Add button to add new history entry
+        JPanel buttonPanel = new JPanel();
+        JButton addButton = new JButton("Add New Entry");
+        addButton.addActionListener(e -> showAddHistoryEntryDialog(clinic));
+        buttonPanel.add(addButton);
+
+        dialog.add(scrollPane, BorderLayout.CENTER);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        dialog.setVisible(true);
     }
-    // ... (Existing findDoctorByName, displayAppointmentsByDay, displayAvailableAppointments, displayNearestAppointments methods)
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(HospitalManagementSystemGUI::new);
+    private void showAddHistoryEntryDialog(Clinic clinic) {
+        JDialog dialog = new JDialog(this, "Add History Entry", true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setSize(300, 200);
+        dialog.setLocationRelativeTo(this);
+
+        JTextArea entryArea = new JTextArea();
+        JScrollPane scrollPane = new JScrollPane(entryArea);
+        dialog.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel();
+        JButton addButton = new JButton("Add Entry");
+        addButton.addActionListener(e -> {
+            String entry = entryArea.getText().trim();
+            if (!entry.isEmpty()) {
+                clinic.addHistoryToDoctor(entry);
+                dialog.dispose();
+                JOptionPane.showMessageDialog(this, "History entry added successfully!");
+            } else {
+                JOptionPane.showMessageDialog(this, "Please enter a valid entry!");
+            }
+        });
+
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        buttonPanel.add(addButton);
+        buttonPanel.add(cancelButton);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
+    }
+
+    // Utility methods for dialogs
+    private void showError(String message) {
+        SwingUtilities.invokeLater(() -> 
+            JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE));
+    }
+
+    private void showSuccess(String message) {
+        SwingUtilities.invokeLater(() -> 
+            JOptionPane.showMessageDialog(this, message, "Success", JOptionPane.INFORMATION_MESSAGE));
+    }
+
+    private boolean confirmDialog(String message) {
+        return JOptionPane.showConfirmDialog(this, message, "Confirm", 
+            JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
     }
 }

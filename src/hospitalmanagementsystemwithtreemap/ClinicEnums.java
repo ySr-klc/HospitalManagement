@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Enum.java to edit this template
  */
-package Clinic_and_Search;
+package hospitalmanagementsystemwithtreemap;
 
 /**
  *
@@ -33,14 +33,7 @@ public class ClinicEnums {
         public String getDescription() {
             return description;
         }
-
-        public static Department fromString(String departmentName) {
-            for (Department department : Department.values()) {
-                if (department.name().equalsIgnoreCase(departmentName)) {
-                    return department;
-                }
-            }
-            return null;
-        }
+        
     }
+
 }

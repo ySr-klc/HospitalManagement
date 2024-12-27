@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
  * @author ysr
  */
 public class AppointmentSlot {
+    hospitalmanagementsystemwithtreemap.ClinicEnums.Department clinic;
     Doctor doc;
     String docName;
     LocalDateTime time;
@@ -18,11 +19,31 @@ public class AppointmentSlot {
     Patient patient;
     String patientName;
     boolean isbooked;
+    boolean PatientCome;
+    String diagnosis="null";
     public AppointmentSlot(Doctor doc, String docName, LocalDateTime time, LocalDateTime endTime) {
         this.doc = doc;
         this.docName = docName;
         this.time = time;
         this.endTime = endTime;
+        clinic=doc.getSpeciality();
+    }
+
+    public boolean isPatientCome() {
+        return PatientCome;
+    }
+
+    public void setIsPatientCome(boolean isPatientCome) {
+        this.PatientCome = isPatientCome;
+    }
+    
+    
+    public String getDiagnosis() {
+        return diagnosis;
+    }
+
+    public void setDiagnosis(String diagnosis) {
+        this.diagnosis = diagnosis;
     }
     
     public void booked(Patient patient,String name){
