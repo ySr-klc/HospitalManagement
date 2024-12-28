@@ -4,7 +4,7 @@
  */
 package hospitalmanagementsystemwithtreemap;
 
-import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
@@ -15,11 +15,11 @@ import java.util.Stack;
  */
 public class Patient extends Person {
 
-    List<AppointmentSlot> patientAppoinments;
+    List<AppointmentSlot> patientAppointments;
     Stack<String> notifications;
     public Patient(String name) {
         super(name);
-        patientAppoinments = new LinkedList();        
+        patientAppointments = new LinkedList();        
         notifications=new Stack<>();
     }
    public void addNotification(String notification){
@@ -30,27 +30,16 @@ public class Patient extends Person {
        return notifications;
    }
     public void addAppointment(AppointmentSlot apt) {
-        this.patientAppoinments.add(apt);
-        patientAppoinments.sort((o1, o2) -> o1.time.compareTo(o1.time));
+        this.patientAppointments.add(apt);
+        patientAppointments.sort(Comparator.comparing(o-> o.time));
     }
 
     public void deleteAppointment(AppointmentSlot apt) {
-        patientAppoinments.remove(apt);
+        patientAppointments.remove(apt);
     }
     
-     public AppointmentSlot getcancelAppointment( LocalDateTime appointment) {
-         for (AppointmentSlot patientAppoinment : patientAppoinments) {
-             
-             if(patientAppoinment.time.equals(appointment)){
-                 return patientAppoinment;
-             }
-                 
-         }
-       return null;
-    }
-
     public List<AppointmentSlot> getPatientAppointments() {
-        return patientAppoinments;
+        return patientAppointments;
     }
      
 }

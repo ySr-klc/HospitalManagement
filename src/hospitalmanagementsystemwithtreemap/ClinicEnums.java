@@ -33,7 +33,6 @@ public class ClinicEnums {
         public String getDescription() {
             return description;
         }
-        
     }
 
 }

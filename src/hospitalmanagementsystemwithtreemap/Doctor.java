@@ -3,9 +3,6 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package hospitalmanagementsystemwithtreemap;
-
-import java.time.LocalDateTime;
-import java.util.PriorityQueue;
 /**
  *
  * @author ysr

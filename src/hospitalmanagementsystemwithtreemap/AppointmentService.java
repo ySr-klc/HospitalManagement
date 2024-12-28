@@ -1,9 +1,8 @@
 package hospitalmanagementsystemwithtreemap;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
+
 
 /**
  * Manages doctor appointments using a Trie-based data structure for efficient
@@ -165,6 +164,8 @@ public class AppointmentService {
      */
     public void bookAppointment(int doctorID, Patient patient, LocalDateTime time) {
         TreeMap<LocalDateTime, AppointmentSlot> slots = doctorsAppointments.get(doctorID);
+        
+        
         if (slots == null) {
             throw new IllegalArgumentException("\n Doctor ID not found: " + doctorID);
         }

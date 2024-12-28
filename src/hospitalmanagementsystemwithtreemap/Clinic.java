@@ -4,12 +4,6 @@
  */
 package hospitalmanagementsystemwithtreemap;
 
-import hospitalmanagementsystemwithtreemap.ClinicEnums;
-import hospitalmanagementsystemwithtreemap.AppointmentManager;
-import hospitalmanagementsystemwithtreemap.AppointmentSlot;
-import hospitalmanagementsystemwithtreemap.Doctor;
-import hospitalmanagementsystemwithtreemap.HistoryOfClinic;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +25,7 @@ public class Clinic {
         
         this.departmentKey=departmentKey;
         this.doctors = doctor;
-         
+        
         history=new HistoryOfClinic(); 
     }
     
@@ -47,11 +41,11 @@ public class Clinic {
     
     //--------------------------------------------
     
-    public void addHistoryToDoctor(String event){
+    public void addHistoryToDoctor(History event){
         history.addHistory(event);
     }
     
-    public List<String> getHistory(){
+    public List<History> getHistory(){
         return  history.getHistory().stream().toList();
     }
     
@@ -93,6 +87,6 @@ public class Clinic {
         aptList.sort((c1,c2)->c1.getTime().compareTo(c2.getTime()));
         return aptList;
     }
-    
+        
     
 }

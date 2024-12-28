@@ -36,7 +36,10 @@ public class AppointmentSlot {
     public void setIsPatientCome(boolean isPatientCome) {
         this.PatientCome = isPatientCome;
     }
-    
+
+    public ClinicEnums.Department getClinic() {
+        return clinic;
+    }
     
     public String getDiagnosis() {
         return diagnosis;

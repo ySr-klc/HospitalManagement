@@ -4,8 +4,7 @@
  */
 package hospitalmanagementsystemwithtreemap;
 
-import java.util.List;
-import java.util.Stack;
+import java.util.PriorityQueue;
 
 /**
  *
@@ -13,24 +12,24 @@ import java.util.Stack;
  */
 public class HistoryOfClinic {
     
-    private Stack<String> historiesOfClinic;
+    private PriorityQueue<History> historiesOfClinic;
 
     // History Manager List Controller
     public HistoryOfClinic() {
       
-        historiesOfClinic=new Stack<>();
+        historiesOfClinic=new PriorityQueue<>();
       
     }
 
  
-    public void addHistory(String event) {
+    public void addHistory(History event) {
         if (event == null) {
             throw new IllegalArgumentException("Appointment information is null");
         }
-            historiesOfClinic.push(event);
+            historiesOfClinic.offer(event);
     }
 
-    public Stack<String> getHistory() {
+    public PriorityQueue<History> getHistory() {
         return historiesOfClinic;
     }
 }

@@ -4,8 +4,9 @@
  */
 package hospitalmanagementsystemwithtreemap;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.Stack;
+import java.util.PriorityQueue;
 
 /**
  *Think we created object of this class for doctor and patient seperatly and all the other functionalties will keep in this class 
@@ -17,7 +18,7 @@ import java.util.Stack;
  */
 public class HistoryOfPatient{
 
-    private TrieWithGenericType<Stack<String>> histories;
+    private TrieWithGenericType<PriorityQueue<History>> histories;
 
     // History Manager List Controller
     public HistoryOfPatient(List<Patient> persons) throws IllegalArgumentException {
@@ -29,7 +30,7 @@ public class HistoryOfPatient{
             if (person == null) {
                 throw new IllegalArgumentException("Person object cannot be null");
             }
-            histories.insert(person.getName(), new Stack<>());
+            histories.insert(person.getName(), new PriorityQueue<>(Comparator.comparing(o-> o.time)));
         }
     }
 
@@ -43,7 +44,7 @@ public class HistoryOfPatient{
                 throw new IllegalArgumentException("Person object cannot be null");
             }
             if (!histories.isExist(person.getName())) {
-                histories.insert(person.getName(), new Stack<>());
+                histories.insert(person.getName(), new PriorityQueue<>(Comparator.comparing(o-> o.time)));
             }
         }
     }
@@ -61,22 +62,22 @@ public class HistoryOfPatient{
     }
 
   
-    public void addHistory(Patient person, String event) throws IllegalArgumentException {
+    public void addHistory(Patient person, History event) throws IllegalArgumentException {
         if (person == null) {
             throw new IllegalArgumentException("Person cannot be null");
         }
-        Stack<String> history = histories.searchExact(person.getName());
+        PriorityQueue<History> history = histories.searchExact(person.getName());
         if (history == null) {
-            history = new Stack<>();
+            history = new PriorityQueue<>(Comparator.comparing(o-> o.time));
             histories.insert(person.getName(), history);
         }
         if (event == null) { // Add check for null event if needed
             throw new IllegalArgumentException("Event cannot be null");
         }
-        history.push(event);
+        history.offer(event);
     }
 
-    public Stack<String> getHistory(Patient person) throws IllegalArgumentException {
+    public PriorityQueue<History> getHistory(Patient person) throws IllegalArgumentException {
         if (person == null) {
             throw new IllegalArgumentException("Person cannot be null");
         }

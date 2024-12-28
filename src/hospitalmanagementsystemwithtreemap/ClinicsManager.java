@@ -4,9 +4,8 @@
  */
 package hospitalmanagementsystemwithtreemap;
 
-import hospitalmanagementsystemwithtreemap.AppointmentManager;
-import hospitalmanagementsystemwithtreemap.AppointmentSlot;
-import hospitalmanagementsystemwithtreemap.Doctor;
+
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -70,10 +69,10 @@ public class ClinicsManager {
     
     
     
-    public void addHistoryToClinic(ClinicEnums.Department clinic, String event ){
+    public void addHistoryToClinic(ClinicEnums.Department clinic, History event ){
         clinics.get(clinic).addHistoryToDoctor(event);
     }
-    public List<String> getHistoryOfClinic(ClinicEnums.Department clinic){
+    public List<History> getHistoryOfClinic(ClinicEnums.Department clinic){
         return clinics.get(clinic).getHistory();
     }
     

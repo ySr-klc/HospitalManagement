@@ -6,6 +6,7 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -46,7 +47,7 @@ public class TrieWithGenericType<V> {
         if (word == null || word.isEmpty()) return;
         
         TrieNode current = root;
-        word = word.toLowerCase();
+        word = word.toLowerCase(Locale.ENGLISH);
         
         for (char ch : word.toCharArray()) {
            
@@ -62,7 +63,7 @@ public class TrieWithGenericType<V> {
     public V searchExact(String word) {
         if (word == null || word.isEmpty()) return null;
         
-        TrieNode node = searchNode(word.toLowerCase());
+        TrieNode node = searchNode(word.toLowerCase(Locale.ENGLISH));
        return (node != null && node.isEndOfWord) ? node.value : null;
     }
 
@@ -184,61 +185,4 @@ public class TrieWithGenericType<V> {
         return false;
     }
     
-    
-     public static void main(String[] args) {
-        TrieWithGenericType<Integer> trie = new TrieWithGenericType<>();
-
-        // Insert some words with values
-        trie.insert("apple", 1);
-        trie.insert("app", 2);
-        trie.insert("application", 3);
-        trie.insert("banana", 4);
-        trie.insert("ban", 5);
-        trie.insert("james", 6);
-        trie.insert("jackson", 7);
-        trie.insert("ajan", 8);
-
-
-        // Test exact search
-        System.out.println("Exact search for 'apple': " + trie.searchExact("apple")); // Output: 1
-        System.out.println("Exact search for 'app': " + trie.searchExact("app"));     // Output: 2
-        System.out.println("Exact search for 'grape': " + trie.searchExact("grape"));   // Output: null
-
-        // Test similar search
-        System.out.println("\nSimilar search for 'app': " + trie.searchSimilar("app"));
-        // Output: [app, apple, application]
-        System.out.println("\nSimilar search for 'ban': " + trie.searchSimilar("ban"));
-        // Output: [ban, banana]
-        System.out.println("\nSimilar search for 'j': " + trie.searchSimilar("j"));
-        // Output: [james, jackson, ajan]
-        System.out.println("\nSimilar search for 'a': " + trie.searchSimilar("a"));
-        // Output: [apple, app, application, ajan]
-        System.out.println("\nSimilar search for 'k': " + trie.searchSimilar("kson").toString());
-
-        System.out.println("\nSimilar search with value for 'app': " + trie.searchSimilarWithValues("app"));
-        //Output: [app=2, apple=1, application=3]
-
-        // Test delete
-        trie.delete("apple");
-        System.out.println("\nAfter deleting 'apple', search for 'apple': " + trie.searchExact("apple")); // Output: null
-        System.out.println("Similar search for 'app' after delete apple: " + trie.searchSimilar("app"));
-        //Output: [app, application]
-
-        trie.delete("app");
-        System.out.println("\nAfter deleting 'app', search for 'app': " + trie.searchExact("app")); // Output: null
-        System.out.println("Similar search for 'app' after delete app: " + trie.searchSimilar("app"));
-        //Output: [application]
-
-        trie.delete("application");
-        System.out.println("\nAfter deleting 'application', search for 'application': " + trie.searchExact("application")); // Output: null
-        System.out.println("Similar search for 'app' after delete application: " + trie.searchSimilar("app"));
-        //Output: []
-
-        // Test with empty string
-        System.out.println("\nSimilar search for '': " + trie.searchSimilar("")); // Output: []
-
-        TrieWithGenericType<String> trieString = new TrieWithGenericType<>();
-        trieString.insert("hello","world");
-        System.out.println("\nExact search for hello: "+trieString.searchExact("hello")); //Output: world
-    }
 }

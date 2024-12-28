@@ -4,10 +4,8 @@ import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,23 +29,16 @@ public class AppointmentManager extends AppointmentService {
                 if (!appointment.isPatientCome()) {
                     appointment.getPatient().addNotification("You miss the appointment!");
                     existingSlots.remove(appointment.getTime());
+                    appointment.getPatient().deleteAppointment(appointment);
+                    return;
                 }
 
-                String event = String.format(
-                        "Past appointment with Dr. %s on %s. Finded diagnosis:%s",
-                        appointment.getDocName(),
-                        appointment.getTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                        appointment.getDiagnosis()
-                );
+                History event=new History(appointment.getTime(),appointment.getDoc(),appointment.getPatient(),appointment.getDiagnosis());
                 patientsHistory.addHistory(appointment.getPatient(), event);
-                event = String.format("Appointment between Dr. %s and Patient %s on %s",
-                        appointment.getDocName(),
-                        appointment.getPatientName(),
-                        appointment.getTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
-                );
+                
                 clinicManager.getClinic(appointment.clinic).addHistoryToDoctor(event);
                 existingSlots.remove(appointment.getTime());
-                appointment.getPatient().getPatientAppointments().remove(appointment);
+                appointment.getPatient().deleteAppointment(appointment);
                 appointment.getPatient().addNotification("Thank you for coming appointment!");
 
             }
@@ -70,24 +61,16 @@ public class AppointmentManager extends AppointmentService {
                 AppointmentSlot slot = appointmentEntry.getValue();
 
                 // If the appointment end time has passed
-                if (slot.getEndTime().isBefore(currentTime)) {
+                if (slot.getEndTime().isBefore(currentTime.minusDays(1))) {
                     // Add to removal list
                     toRemove.add(appointmentTime);
 
                     // If the appointment was booked, add it to patient's history
                     if (slot.isBooked() && slot.getPatient() != null) {
-                        String event = String.format(
-                                "Past appointment with Dr. %s on %s. Finded diagnosis:%s  Undecleared event.",
-                                slot.getDocName(),
-                                slot.getTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                                slot.getDiagnosis()
-                        );
+                        String note="Undecleared Appointmet!";
+                        History event=new History(slot.getTime(),slot.getDoc(),slot.getPatient(),slot.getDiagnosis(),note);
                         patientsHistory.addHistory(slot.getPatient(), event);
-                        event = String.format("Appointment between Dr. %s and Patient %s on undecleared event",
-                                slot.getDocName(),
-                                slot.getPatientName(),
-                                slot.getTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
-                        );
+                      
                         clinicManager.getClinic(slot.clinic).addHistoryToDoctor(event);
                         // Remove from patient's active appointments
                         slot.getPatient().deleteAppointment(slot);
@@ -126,11 +109,14 @@ public class AppointmentManager extends AppointmentService {
                 startDate = lastAppointmentDate.get().plusDays(1); // Start from the day AFTER the last existing appointment
             }
         }
-        for (int i = 0; i < days; i++) {
-            days=(startDate.getDayOfWeek()==DayOfWeek.SUNDAY)&&(startDate.getDayOfWeek()==DayOfWeek.FRIDAY) ? days+1: days;
+        LocalDate endDate = startDate;
+
+        for (int i = 1; i <= days; i++) {
+            if (endDate.getDayOfWeek() == DayOfWeek.SATURDAY || endDate.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                i--;
+            }
+            endDate = endDate.plusDays(1); // Calculate the CORRECT end date
         }
-        
-        LocalDate endDate = startDate.plusDays(days); // Calculate the CORRECT end date
 
         while (startDate.isBefore(endDate)) {
             if (startDate.getDayOfWeek() != DayOfWeek.SATURDAY && startDate.getDayOfWeek() != DayOfWeek.SUNDAY) {
@@ -189,12 +175,12 @@ public class AppointmentManager extends AppointmentService {
             if (slot.isBooked()) {
                 slot.getPatient().addNotification("Your appointment with Dr. " + slot.getDocName()
                         + " on " + slot.getTime() + " has been canceled by the doctor.");
+                slot.getPatient().getPatientAppointments().removeIf(apt->apt.getTime().toLocalDate().isEqual(date.toLocalDate()));
 
             }
             cancelAppointment(doctorID, slot.getTime()); // Cancel the appointment
         }
     }
-
 
     /**
      *
@@ -210,7 +196,7 @@ public class AppointmentManager extends AppointmentService {
             }
             super.bookAppointment(doctorID, patient, time); // Use the inherited method
         } catch (IllegalArgumentException e) {
-            System.out.println(e.getMessage());
+            throw(e);
         }
     }
 
@@ -220,10 +206,10 @@ public class AppointmentManager extends AppointmentService {
             return false; // No appointments at all
         }
 
-        return patientAppointments.stream().anyMatch(appointment ->
-            appointment.getDoc().getId() == doctor && 
-            appointment.getTime().toLocalDate().equals(time.toLocalDate())
-    );
+        return patientAppointments.stream().anyMatch(appointment
+                -> appointment.getDoc().getId() == doctor
+                && appointment.getTime().toLocalDate().equals(time.toLocalDate())
+        );
     }
 
     public boolean cancelPatientAppointment(Patient patient, AppointmentSlot appointment) {
