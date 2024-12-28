@@ -4,7 +4,6 @@
  */
 package hospitalmanagementsystemwithtreemap;
 
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -118,7 +117,7 @@ public class HospitalManagementSystem {
                 System.out.println((i + 1) + ". " + clinics.get(i).name().toLowerCase(Locale.ENGLISH));
             }
             System.out.println("Select clinic that you want to visit(back menu 0)");
-            int choice = getIntInput("Enter your choice: ")-1;
+            int choice = getIntInput("Enter your choice: ") - 1;
 
             if (choice == -1) {
                 return;
@@ -503,27 +502,25 @@ public class HospitalManagementSystem {
                 List<AppointmentSlot> nearestSlots = appointmentManager.getAllDoctorsNearestAppointmentDatesByTimeOrder();
                 displayNearestAppointments(nearestSlots);
 
-                System.out.println("\n1. Search for Doctor");
-                System.out.println("2. Book Appointment by Doctor Name");
-                System.out.println("3. See All Appointments for a Doctor");
-                System.out.println("4. Book nearest Appointmet from Doctor");
-                System.out.println("5. Book nearest Appointmet from Doctors by number");
-                System.out.println("6. Back to Previous Menu");
+              
+                System.out.println("\n1. Book Appointment by Doctor Name");
+                System.out.println("2. See All Appointments for a Doctor");
+                System.out.println("3. Book nearest Appointmet from Doctor");
+                System.out.println("4. Book nearest Appointmet from Doctors by number");
+                System.out.println("5. Back to Previous Menu");
 
                 int choice = getIntInput("Enter your choice: ");
 
                 switch (choice) {
                     case 1 ->
-                        searchAndBookDoctor(patient);
-                    case 2 ->
                         bookAppointmentByDoctorName(patient);
-                    case 3 ->
+                    case 2 ->
                         viewAllDoctorAppointments(patient);
-                    case 4 ->
+                    case 3 ->
                         takeNearestAppointmentFromDoctor(nearestSlots.get(0).doc, patient, nearestSlots.get(0).getTime());
-                    case 5 ->
+                    case 4 ->
                         takeBetweenNearestAppointmentByIndex(patient, nearestSlots, getIntInput("Index:") - 1);
-                    case 6 -> {
+                    case 5 -> {
                         return;
                     }
                     default ->
@@ -717,50 +714,6 @@ public class HospitalManagementSystem {
         }
     }
 
-    private static void searchAndBookDoctor(Patient patient) {
-        System.out.println("Not Working yet");
-//        while (true) {
-//            System.out.println("Enter doctor name to search (or 'back' to return):");
-//            String searchTerm = scanner.nextLine();
-//
-//            if (searchTerm.equalsIgnoreCase("back")) {
-//                return;
-//            }
-//
-//            List<String> matchingDoctors = appointmentManager.findDoctor(searchTerm);
-//            if (matchingDoctors.isEmpty()) {
-//                System.out.println("No matching doctors found.");
-//                continue;
-//            }
-//
-//            System.out.println("\nMatching doctors:");
-//            for (int i = 0; i < matchingDoctors.size(); i++) {
-//                System.out.println((i + 1) + ". " + matchingDoctors.get(i));
-//            }
-//
-//            System.out.println("\n1. Search again");
-//            System.out.println("2. Select doctor");
-//            System.out.println("3. Back to menu");
-//
-//            int choice = getIntInput("Enter your choice: ");
-//
-//            if (choice == 1) {
-//                continue;
-//            } else if (choice == 2) {
-//                int doctorIndex = getIntInput("Enter doctor number: ") - 1;
-//                if (doctorIndex >= 0 && doctorIndex < matchingDoctors.size()) {
-//                    String doctorName = matchingDoctors.get(doctorIndex);
-//                    Doctor selectedDoctor = findDoctorByName(doctorName);
-//                    if (selectedDoctor != null) {
-//                        showAndBookAppointment(patient, selectedDoctor);
-//                    }
-//                }
-//            } else if (choice == 3) {
-//                return;
-//            }
-//        }
-    }
-
     private static void showAndBookAppointment(Patient patient, Doctor doctor) {
         AppointmentSlot nearest = appointmentManager.getNearestAvailableAppointmentSlot(doctor.getId());
         if (nearest == null) {
@@ -848,9 +801,9 @@ public class HospitalManagementSystem {
 
             if (choice > 0 && choice <= patients.size()) {
                 return patients.get(choice - 1);
-            }else if (choice == 0) {
+            } else if (choice == 0) {
                 return addNewPatient();
-            }else if (choice == patients.size() + 1) {
+            } else if (choice == patients.size() + 1) {
                 return null;
             } else {
                 System.out.println("\nInvalid choice. Please try again.");
@@ -858,21 +811,22 @@ public class HospitalManagementSystem {
             }
         }
     }
-    private static Patient addNewPatient(){
+
+    private static Patient addNewPatient() {
         try {
-              System.out.println("Patient Name");
-              String name=scanner.nextLine();
-              System.out.println("Surname:");
-              String surname=scanner.nextLine();
-              Patient newPat=new Patient(name);
-              patients.add(newPat);
-              return newPat;
+            System.out.println("Patient Name");
+            String name = scanner.nextLine();
+            System.out.println("Surname:");
+            String surname = scanner.nextLine();
+            Patient newPat = new Patient(name);
+            patients.add(newPat);
+            return newPat;
         } catch (Exception e) {
             System.out.println(e);
         }
         return null;
     }
-    
+
     private static void bookAppointmentByDoctorName(Patient patient) {
         System.out.println("Enter doctor name:");
         String doctorName = scanner.nextLine();
@@ -1033,7 +987,7 @@ public class HospitalManagementSystem {
                 case 3 ->
                     deleteDoctor(clinic, scanner);
                 case 4 ->
-                    viewClinicHistory(clinic);                
+                    viewClinicHistory(clinic);
                 case 5 ->
                     viewNearestAppointments(clinic);
                 case 0 -> {
@@ -1096,14 +1050,14 @@ public class HospitalManagementSystem {
             System.out.println("No history recorded for this clinic.");
         } else {
             System.out.println("Clinic History:");
-            int i=0;
+            int i = 0;
             for (History event : history) {
-                System.out.println(i +"- " + event);i++;
+                System.out.println(i + "- " + event);
+                i++;
             }
         }
     }
 
- 
     private static void viewNearestAppointments(Clinic clinic) {
         if (clinic.appointmentManagerConnection == null) {
             System.out.println("Appointment Manager is not connected to this clinic.");
