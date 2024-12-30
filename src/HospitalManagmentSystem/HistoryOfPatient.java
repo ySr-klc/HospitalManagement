@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package hospitalmanagementsystemwithtreemap;
+package HospitalManagmentSystem;
 
 import java.util.Comparator;
 import java.util.List;
@@ -10,19 +10,16 @@ import java.util.PriorityQueue;
 
 /**
  *Think we created object of this class for doctor and patient seperatly and all the other functionalties will keep in this class 
- * that's you should keep all the list of doctor and patient in here in trie 
- * 
- * 
- * @author ysr
- * @param <T>
+ *
  */
-public class HistoryOfPatient{
+import java.util.*;
 
-    private TrieWithGenericType<PriorityQueue<History>> histories;
+public class HistoryOfPatient {
 
-    // History Manager List Controller
+    private static Map<Integer, LinkedList<History>> histories;
+
     public HistoryOfPatient(List<Patient> persons) throws IllegalArgumentException {
-        histories = new TrieWithGenericType<>();
+        histories = new HashMap<>();
         if (persons == null) {
             throw new IllegalArgumentException("List of persons cannot be null");
         }
@@ -30,57 +27,58 @@ public class HistoryOfPatient{
             if (person == null) {
                 throw new IllegalArgumentException("Person object cannot be null");
             }
-            histories.insert(person.getName(), new PriorityQueue<>(Comparator.comparing(o-> o.time)));
+            histories.put(person.getId(), new LinkedList<>());
         }
     }
 
-   
     public void updateList(List<Patient> persons) throws IllegalArgumentException {
         if (persons == null) {
             throw new IllegalArgumentException("List of persons cannot be null");
         }
-        for (Person person : persons) {
+        for (Patient person : persons) {
             if (person == null) {
                 throw new IllegalArgumentException("Person object cannot be null");
             }
-            if (!histories.isExist(person.getName())) {
-                histories.insert(person.getName(), new PriorityQueue<>(Comparator.comparing(o-> o.time)));
-            }
+            histories.computeIfAbsent(person.getId(), k -> new LinkedList<>());
         }
     }
 
-    
     public void deleteSpecificElementFromList(Patient person) {
-        if (person != null && histories.isExist(person.getName())) {
-            histories.delete(person.getName());
+        if (person != null) {
+            histories.remove(person.getId());
         }
     }
 
-
-    public void clearAllList() {
-        histories = new TrieWithGenericType<>(); // Garbage collector handles old object
-    }
-
-  
     public void addHistory(Patient person, History event) throws IllegalArgumentException {
         if (person == null) {
             throw new IllegalArgumentException("Person cannot be null");
         }
-        PriorityQueue<History> history = histories.searchExact(person.getName());
+        LinkedList<History> history = histories.get(person.getId());
         if (history == null) {
-            history = new PriorityQueue<>(Comparator.comparing(o-> o.time));
-            histories.insert(person.getName(), history);
+            history = new LinkedList<>();
+            histories.put(person.getId(), history);
         }
-        if (event == null) { // Add check for null event if needed
+        if (event == null) {
             throw new IllegalArgumentException("Event cannot be null");
         }
-        history.offer(event);
+
+        int index = 0;
+        for (History h : history) {
+            if (event.time.compareTo(h.time) < 0) {
+                break;
+            }
+            index++;
+        }
+        history.add(index, event);
     }
 
-    public PriorityQueue<History> getHistory(Patient person) throws IllegalArgumentException {
+    public static LinkedList<History> getHistory(Patient person) throws IllegalArgumentException {
         if (person == null) {
             throw new IllegalArgumentException("Person cannot be null");
         }
-        return histories.searchExact(person.getName());
+        return histories.get(person.getId());
     }
+
+   
+    
 }

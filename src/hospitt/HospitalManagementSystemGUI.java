@@ -1,5 +1,14 @@
-package hospitalmanagementsystemwithtreemap;
+package hospitt;
 
+import a.AppointmentManager;
+import a.AppointmentSlot;
+import a.Clinic;
+import a.ClinicEnums;
+import a.ClinicsManager;
+import a.Doctor;
+import a.HistoryOfPatient;
+import a.Patient;
+import a.Search;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;

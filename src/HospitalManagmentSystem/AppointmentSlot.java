@@ -1,17 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-package hospitalmanagementsystemwithtreemap;
+package HospitalManagmentSystem;
 
 import java.time.LocalDateTime;
 
-/**
- *
- * @author ysr
- */
 public class AppointmentSlot {
-    hospitalmanagementsystemwithtreemap.ClinicEnums.Department clinic;
+    Department clinic;
     Doctor doc;
     String docName;
     LocalDateTime time;
@@ -19,7 +11,7 @@ public class AppointmentSlot {
     Patient patient;
     String patientName;
     boolean isbooked;
-    boolean PatientCome;
+    boolean PatientCame;
     String diagnosis="null";
     public AppointmentSlot(Doctor doc, String docName, LocalDateTime time, LocalDateTime endTime) {
         this.doc = doc;
@@ -29,15 +21,15 @@ public class AppointmentSlot {
         clinic=doc.getSpeciality();
     }
 
-    public boolean isPatientCome() {
-        return PatientCome;
+    public boolean isPatientCame() {
+        return PatientCame;
     }
 
-    public void setIsPatientCome(boolean isPatientCome) {
-        this.PatientCome = isPatientCome;
+    public void setIsPatientCame(boolean isPatientCome) {
+        this.PatientCame = isPatientCome;
     }
 
-    public ClinicEnums.Department getClinic() {
+    public Department getClinic() {
         return clinic;
     }
     
@@ -59,16 +51,8 @@ public class AppointmentSlot {
         return doc;
     }
 
-    public void setDoc(Doctor doc) {
-        this.doc = doc;
-    }
-
     public String getDocName() {
         return docName;
-    }
-
-    public void setDocName(String docName) {
-        this.docName = docName;
     }
 
     public LocalDateTime getTime() {
@@ -83,10 +67,6 @@ public class AppointmentSlot {
         return endTime;
     }
 
-    public void setEndTime(LocalDateTime endTime) {
-        this.endTime = endTime;
-    }
-
     public Patient getPatient() {
         return patient;
     }
@@ -99,20 +79,10 @@ public class AppointmentSlot {
         return patientName;
     }
 
-    public void setPatientName(String patientName) {
-        this.patientName = patientName;
-    }
-
     public boolean isBooked() {
         return isbooked;
     }
 
-    public void setIsbooked(boolean isbooked) {
-        this.isbooked = isbooked;
-    }
-    
- 
-    
     @Override
 public String toString() {
     return String.format("Appointment with %s at %s - %s%s", 
@@ -120,7 +90,5 @@ public String toString() {
         time.toString(), 
         endTime.toString(),
         isbooked ? " (Booked by " + patientName + ")" : " (Available)");
-}
-    
-    
+    }
 }

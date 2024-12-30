@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package hospitalmanagementsystemwithtreemap;
+package HospitalManagmentSystem;
 
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -19,13 +19,13 @@ public class Patient extends Person {
     Stack<String> notifications;
     public Patient(String name) {
         super(name);
-        patientAppointments = new LinkedList();        
+        patientAppointments = new LinkedList<>();
         notifications=new Stack<>();
     }
    public void addNotification(String notification){
         notifications.push(notification);
     }
-//    
+//
    public Stack<String> getNotifications(){
        return notifications;
    }

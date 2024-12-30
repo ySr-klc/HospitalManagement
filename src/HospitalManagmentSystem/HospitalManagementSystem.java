@@ -1,61 +1,39 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
- */
-package hospitalmanagementsystemwithtreemap;
+
+package HospitalManagmentSystem;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
-import java.util.Stack;
-import java.util.TreeMap;
-import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class HospitalManagementSystem {
-
     private static final Scanner scanner = new Scanner(System.in);
     private static final AppointmentManager appointmentManager;
     private static final List<Doctor> doctors;
     private static final List<Patient> patients;
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy, dd MMM, EEEE  HH.mm", Locale.ENGLISH);
     private static final ClinicsManager clinicManager;
     private static final HistoryOfPatient patientsHistory;
     private static final Search searchPanel;
 
     static {
         // Initialize sample data
-
-        doctors = new ArrayList<>();
-        doctors.add(new Doctor("John Brown", ClinicEnums.Department.CARDIOLOGY));
-        doctors.add(new Doctor("Isabella Dean", ClinicEnums.Department.CARDIOLOGY));
-        doctors.add(new Doctor("Sarah Black", ClinicEnums.Department.PEDIATRICS));
-        doctors.add(new Doctor("Cedric Wizard", ClinicEnums.Department.PEDIATRICS));
-        doctors.add(new Doctor("Michael White", ClinicEnums.Department.NEUROLOGY));
-        doctors.add(new Doctor("Abigail Honest", ClinicEnums.Department.NEUROLOGY));
-        doctors.add(new Doctor("Omar Carney", ClinicEnums.Department.UROLOGY));
-        doctors.add(new Doctor("Olivia Nice", ClinicEnums.Department.UROLOGY));
-        doctors.add(new Doctor("Joseph Grey", ClinicEnums.Department.ORTHOPEDICS));
-        doctors.add(new Doctor("Hannah Beck", ClinicEnums.Department.ORTHOPEDICS));
+        doctors = FileInputTaker.readDoctorsFromFile("doctors.txt");
+        doctors.sort(Comparator.comparing(Doctor::getSpeciality));
         patients = new ArrayList<>();
         patients.add(new Patient("Alice"));
         patients.add(new Patient("Bob"));
-
+       
         clinicManager = new ClinicsManager(doctors);
         patientsHistory = new HistoryOfPatient(patients);
-        appointmentManager = new AppointmentManager(doctors, patientsHistory, clinicManager);
+        appointmentManager = new AppointmentManager(doctors, patientsHistory);
         searchPanel = new Search(doctors);
         clinicManager.connectAppointmentManager(appointmentManager);
-
+        try {
+            FileInputTaker.generatePatientHistories(doctors, patients, "diagnoses.txt", patientsHistory);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }   
         Random rand = new Random();
         int[] days = {1, 2, 3, 4, 5}, duration = {10, 15, 30};
         int randomStarter, rndmStarter2;
@@ -63,24 +41,9 @@ public class HospitalManagementSystem {
             randomStarter = rand.nextInt(100) % 3;
             rndmStarter2 = rand.nextInt(100) % 5;
             appointmentManager.createDoctorAppointments(doctor, days[rndmStarter2], duration[randomStarter]);
-
         }
-        Timer timer = new Timer();
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                appointmentManager.passedAppointmentHandler();
-            }
-
-        };
-        timer.schedule(task, 2000, 5000);
     }
-
-    public static void main(String[] args) {
-
-        mainMenu();
-    }
-
+    public static void main(String[] args) { mainMenu();}
     private static void mainMenu() {
         while (true) {
             System.out.println("\nHello welcome to Hospital Management System");
@@ -93,28 +56,26 @@ public class HospitalManagementSystem {
 
             switch (choice) {
                 case 1 ->
-
-                    doctorMenu(selectDoctor());
+                        doctorMenu(selectDoctor());
                 case 2 ->
-                    patientMenu(selectPatient());
+                        patientMenu(selectPatient());
                 case 3 ->
-                    clinicMenu();
+                        clinicMenu();
                 case 4 -> {
                     System.out.println("Goodbye!");
                     System.exit(0);
                 }
                 default ->
-                    System.out.println("Invalid choice. Please try again.");
+                        System.out.println("Invalid choice. Please try again.");
             }
         }
     }
-
     private static void clinicMenu() {
-        List<ClinicEnums.Department> clinics = Arrays.asList(ClinicEnums.Department.values());
+        List<Department> clinics = Arrays.asList(Department.values());
         while (true) {
             System.out.println("\nWelcome to the clinic page!");
             for (int i = 0; i < clinics.size(); i++) {
-                System.out.println((i + 1) + ". " + clinics.get(i).name().toLowerCase(Locale.ENGLISH));
+                System.out.println((i + 1) + ". " + clinics.get(i).name().toUpperCase(Locale.ENGLISH));
             }
             System.out.println("Select clinic that you want to visit(back menu 0)");
             int choice = getIntInput("Enter your choice: ") - 1;
@@ -136,9 +97,11 @@ public class HospitalManagementSystem {
             }
         }
     }
-
     private static void doctorMenu(Doctor selectedDoctor) {
         while (true) {
+            if (selectedDoctor == null) {
+                return;
+            }
             System.out.println("\nDoctor Menu");
             System.out.println("1. Schedule Appointment");
             System.out.println("2. View Current Appointments");
@@ -149,21 +112,19 @@ public class HospitalManagementSystem {
 
             switch (choice) {
                 case 1 ->
-                    scheduleAppointmentMenu(selectedDoctor);
+                        scheduleAppointmentMenu(selectedDoctor);
                 case 2 ->
-                    viewDoctorAppointments(selectedDoctor);
+                        viewDoctorAppointments(selectedDoctor);
                 case 3 ->
-                    viewTakenDoctorAppointments(selectedDoctor);
+                        viewTakenDoctorAppointments(selectedDoctor);
                 case 4 -> {
                     return;
                 }
                 default ->
-                    System.out.println("Invalid choice. Please try again.");
+                        System.out.println("Invalid choice. Please try again.");
             }
         }
     }
-
-// New function to display taken appointments
     private static void viewTakenDoctorAppointments(Doctor selectedDoctor) {
         List<AppointmentSlot> slots = appointmentManager.viewTakenDoctorAppointments(selectedDoctor);
         if (slots.isEmpty()) {
@@ -177,10 +138,10 @@ public class HospitalManagementSystem {
             for (AppointmentSlot slot : slots) {
 
                 if (slot.isBooked()) { // Check if appointment is booked
-                    System.out.println(String.format("%s. Date/Time: %s, Patient: %s",
+                    System.out.printf("%s. Date/Time: %s, Patient: %s%n",
                             i,
                             slot.getTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                            slot.getPatientName()));
+                            slot.getPatientName());
                 }
                 i++;
             }
@@ -190,28 +151,25 @@ public class HospitalManagementSystem {
             }
 
             appointmentHandle(slots.get(choice));
-
         } catch (Exception e) {
             System.out.println("Exception found" + e.getMessage());
         }
-
     }
-
     private static void appointmentHandle(AppointmentSlot slot) {
-        System.out.println(String.format("Date/Time: %s, Patient: %s",
+        System.out.printf("Date/Time: %s, Patient: %s%n",
                 slot.getTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
-                slot.getPatientName()));
+                slot.getPatientName());
         System.out.println("Did patient come to appointment? ");
         System.out.println("1.Yes");
         System.out.println("2.No");
         int choice = getIntInput("Enter your choice: ");
         if (choice == 2) {
-            slot.setIsPatientCome(false);
+            slot.setIsPatientCame(false);
             System.out.println("Thank for your time");
             appointmentManager.passedAppointmentHandler(slot);
-            return;
         } else if (choice == 1) {
-            slot.setIsPatientCome(true);
+            while(true){
+            slot.setIsPatientCame(true);
             System.out.println("1. Add diagnose and finish");
             System.out.println("2. Return back menu");
             choice = getIntInput("Enter your choice: ");
@@ -226,26 +184,21 @@ public class HospitalManagementSystem {
                     return;
                 }
                 default ->
-                    System.out.println("Invalid choice. Please try again.");
+                        System.out.println("Invalid choice. Please try again.");
             }
+        }
         }
     }
 
     private static void scheduleAppointmentMenu(Doctor selectedDoctor) {
         while (true) {
             System.out.println("\nSchedule Appointment Menu");
-
-            if (selectedDoctor == null) {
-                return;
-            }
-
             // Show current appointments for the selected doctor
             List<AppointmentSlot> currentAppointments = appointmentManager.getAllAppointmentsForDoctor(selectedDoctor.getId());
             if (!currentAppointments.isEmpty()) {
                 System.out.println("\nCurrent appointments for " + selectedDoctor.getName() + ":");
                 displayAppointmentsByDay(currentAppointments);
             }
-
             System.out.println("\n1. Schedule New Days");
             System.out.println("2. Cancel a Specific Day");
             System.out.println("3. Cancel Specific Time Range");
@@ -256,58 +209,56 @@ public class HospitalManagementSystem {
 
             switch (choice) {
                 case 1 ->
-                    scheduleNewDays(selectedDoctor);
+                        scheduleNewDays(selectedDoctor);
                 case 2 ->
-                    cancelSpecificDay(selectedDoctor);
+                        cancelSpecificDay(selectedDoctor);
                 case 3 ->
-                    cancelTimeRange(selectedDoctor);
+                        cancelTimeRange(selectedDoctor);
                 case 4 ->
-                    rearrangeHours(selectedDoctor);
+                        rearrangeHours(selectedDoctor);
                 case 5 -> {
                     return;
                 }
                 default ->
-                    System.out.println("Invalid choice. Please try again.");
+                        System.out.println("Invalid choice. Please try again.");
             }
         }
     }
-
     private static void patientMenu(Patient selectedPatient) {
+        if (selectedPatient == null) {
+            return;
+        }
         while (true) {
             System.out.println("\nPatient Menu");
-
-            System.out.println("\n1. View Appointments");
-            System.out.println("2. Book Appointment");
-            System.out.println("3. Search Appointment");
-            System.out.println("4. Show History");
-            System.out.println("5. Notifications");
-            System.out.println("6. Cancel Appointment");
-            System.out.println("7. Back to Main Menu");
+            System.out.println("-----------------"+selectedPatient.getName()+"----------------");
+            System.out.println("1. View Appointments");
+            System.out.println("2. Search Appointment");
+            System.out.println("3. Show History");
+            System.out.println("4. Notifications");
+            System.out.println("5. Cancel Appointment");
+            System.out.println("6. Back to Main Menu");
 
             int choice = getIntInput("Enter your choice: ");
 
             switch (choice) {
                 case 1 ->
-                    viewPatientAppointments(selectedPatient);
+                        viewPatientAppointments(selectedPatient);
                 case 2 ->
-                    bookAppointmentMenu(selectedPatient);
+                        searchAndTakeAppointment(selectedPatient);
                 case 3 ->
-                    searchAndTakeAppointment(selectedPatient);
+                        showPatientHistory(selectedPatient);
                 case 4 ->
-                    showPatientHistory(selectedPatient);
+                        showPatientNotifications(selectedPatient);
                 case 5 ->
-                    showPatientNotifications(selectedPatient);
-                case 6 ->
-                    cancelAppointment(selectedPatient);
-                case 7 -> {
+                        cancelAppointment(selectedPatient);
+                case 6 -> {
                     return;
                 }
                 default ->
-                    System.out.println("Invalid choice. Please try again.");
+                        System.out.println("Invalid choice. Please try again.");
             }
         }
     }
-
     private static void searchAndTakeAppointment(Patient patient) {
         while (true) {
             System.out.println("\nSearch panel.");
@@ -318,18 +269,17 @@ public class HospitalManagementSystem {
             int choice = getIntInput("Enter your choice: ");
             switch (choice) {
                 case 1 ->
-                    searchForDoctor(patient);
+                        searchForDoctor(patient);
                 case 2 ->
-                    searchForClinic(patient);
+                        searchForClinic(patient);
                 case 3 -> {
                     return;
                 }
                 default ->
-                    System.out.println("Invalid choic. please try again.");
+                        System.out.println("Invalid choic. please try again.");
             }
         }
     }
-
     private static void searchForDoctor(Patient patient) {
         try {
             System.out.println("Doctor name:");
@@ -343,8 +293,12 @@ public class HospitalManagementSystem {
 
             int i = 1;
             for (Map.Entry<String, Integer> entry : searchResult) {
-                System.out.println(i++ + ". " + entry.getKey());
-            }
+                Doctor doctor = doctors.stream()
+                        .filter(d -> d.getId()==entry.getValue())  // Filter by matching ID
+                        .findFirst()                                 // Get the first matching doctor
+                        .orElse(null);
+                assert doctor != null;
+                System.out.println(i++ + ". " + doctor.getName()+ " - Clinic: "+doctor.getSpeciality().toString().toUpperCase(Locale.ENGLISH));            }
 
             int choice = getIntInput("\nSelect the doctor you want to take an appointment with: ") - 1;
 
@@ -353,26 +307,22 @@ public class HospitalManagementSystem {
             }
 
             int doctorId = searchResult.get(choice).getValue();
-            List<AppointmentSlot> doctorAppointments = appointmentManager.getNearestAvailableAppointmentSlots(doctorId);
-
-            if (doctorAppointments == null || doctorAppointments.isEmpty()) {
-                System.out.println("No available appointments found for this doctor.");
-                return;
+            AppointmentSlot doctorAppointments = appointmentManager.getNearestAvailableAppointmentSlot(doctorId);
+            System.out.println("Nearest appointment for Dr."+doctorAppointments.docName+" at Time"+doctorAppointments.getTime().format(formatter));
+            System.out.println("1. Select nearst appointment");
+            System.out.println("2. View avaliable appointments");
+            System.out.println("3. Back to main");
+            choice=getIntInput("Enter your choice:");
+            switch (choice) {
+                case 1 ->{
+                        appointmentManager.bookAppointment(doctorId, patient, doctorAppointments.getTime());
+                        System.out.println("Appointment Booked Succesfuly!");}
+                case 2 ->
+                        viewAllDoctorAppointments(patient, doctorId);
+                case 3 -> {
+                }
+                default -> System.out.println("Invalid input. Please try again!");
             }
-
-            for (int j = 0; j < doctorAppointments.size(); j++) {
-                System.out.println((j + 1) + ". " + doctorAppointments.get(j)); // Corrected toString usage
-            }
-
-            choice = getIntInput("Select the appointment you want to take: ") - 1;
-
-            if (choice < 0 || choice >= doctorAppointments.size()) {
-                throw new IndexOutOfBoundsException("Invalid appointment selection.");
-            }
-
-            appointmentManager.bookAppointment(doctorId, patient, doctorAppointments.get(choice).getTime());
-            System.out.println("Appointment booked successfully!");
-
         } catch (InputMismatchException e) {
             System.out.println("Invalid input. Please enter a number.");
             scanner.next(); // Clear the invalid input
@@ -382,50 +332,38 @@ public class HospitalManagementSystem {
             System.out.println("Error booking appointment: " + e.getMessage());
         }
     }
-
     private static void searchForClinic(Patient patient) {
         try {
-            System.out.println("Clinic that you are looking for: ");
-            String word = scanner.nextLine();
-            List<Map.Entry<String, ClinicEnums.Department>> searchResult = searchPanel.searchForClinic(word);
+            List<Department> clinics = Arrays.asList(Department.values());
+            System.out.println("\nWelcome to the clinic page!");
 
-            if (searchResult.isEmpty()) {
-                System.out.println("No clinics found matching that name.");
-                return;
+            for (int i = 0; i < clinics.size(); i++) {
+                System.out.println((i + 1) + ". " + clinics.get(i).name().toUpperCase(Locale.ENGLISH));
             }
+            int choice = getIntInput("Enter clinic number (1-" + clinics.size() + "): ");
 
-            int i = 1;
-            for (Map.Entry<String, ClinicEnums.Department> entry : searchResult) {
-                System.out.println(i++ + ". " + entry.getKey());
-            }
-
-            int choice = getIntInput("Selected clinic: ") - 1;
-
-            if (choice < 0 || choice >= searchResult.size()) {
+            if (choice < 1 || choice > clinics.size()) {
                 throw new IndexOutOfBoundsException("Invalid clinic selection.");
             }
-
-            List<AppointmentSlot> appointmentsFromClinic = clinicManager.getAppointmentsFromClinic(searchResult.get(choice).getValue());
+            Department selectedClinic = clinics.get(choice - 1);
+            List<AppointmentSlot> appointmentsFromClinic = clinicManager.getAppointmentsFromClinic(selectedClinic);
 
             if (appointmentsFromClinic == null || appointmentsFromClinic.isEmpty()) {
                 System.out.println("No appointments found in this clinic.");
                 return;
             }
-
-            i = 1;
+            int i = 1;
             for (AppointmentSlot appointmentSlot : appointmentsFromClinic) {
                 System.out.println(i++ + ". " + appointmentSlot);
             }
+            choice = getIntInput("Select appointment:");
 
-            choice = getIntInput("Select appointment: ") - 1;
-
-            if (choice < 0 || choice >= appointmentsFromClinic.size()) {
+            if (choice < 1 || choice > appointmentsFromClinic.size()) {
                 throw new IndexOutOfBoundsException("Invalid appointment selection.");
             }
 
-            appointmentManager.bookAppointment(appointmentsFromClinic.get(choice).getDoc().getId(), patient, appointmentsFromClinic.get(choice).getTime());
+            appointmentManager.bookAppointment(appointmentsFromClinic.get(choice - 1).getDoc().getId(), patient, appointmentsFromClinic.get(choice - 1).getTime());
             System.out.println("Appointment booked successfully!");
-
         } catch (InputMismatchException e) {
             System.out.println("Invalid input. Please enter a number.");
             scanner.next(); // Clear the invalid input
@@ -435,7 +373,6 @@ public class HospitalManagementSystem {
             System.out.println("Error booking appointment: " + e.getMessage());
         }
     }
-
     private static void cancelAppointment(Patient patient) {
         List<AppointmentSlot> patientAppointments = patient.getPatientAppointments();
         while (true) {
@@ -462,12 +399,11 @@ public class HospitalManagementSystem {
 
                 appointmentManager.cancelPatientAppointment(patient, patient.getPatientAppointments().get(choice));
             } catch (Exception e) {
-                System.out.println("Operations failed!" + e.toString());
+                System.out.println("Operations failed!" + e.getMessage());
                 return;
             }
         }
     }
-
     private static void showPatientNotifications(Patient patient) {
         Stack<String> not = (Stack<String>) patient.notifications.clone();
         if (not.isEmpty()) {
@@ -484,82 +420,15 @@ public class HospitalManagementSystem {
             int choice = getIntInput("Enter your choice: ");
             switch (choice) {
                 case 1 ->
-                    patient.notifications.clear();
+                        patient.notifications.clear();
                 case 2 -> {
                     return;
                 }
                 default ->
-                    System.out.println("Invalid choice. Please try again.");
-            }
-        }
-    }
-
-    private static void bookAppointmentMenu(Patient patient) {
-        try {
-            while (true) {
-                System.out.println("\nTake Appointment Menu");
-                System.out.println("\nAll doctors and their nearest appointments:");
-                List<AppointmentSlot> nearestSlots = appointmentManager.getAllDoctorsNearestAppointmentDatesByTimeOrder();
-                displayNearestAppointments(nearestSlots);
-
-              
-                System.out.println("\n1. Book Appointment by Doctor Name");
-                System.out.println("2. See All Appointments for a Doctor");
-                System.out.println("3. Book nearest Appointmet from Doctor");
-                System.out.println("4. Book nearest Appointmet from Doctors by number");
-                System.out.println("5. Back to Previous Menu");
-
-                int choice = getIntInput("Enter your choice: ");
-
-                switch (choice) {
-                    case 1 ->
-                        bookAppointmentByDoctorName(patient);
-                    case 2 ->
-                        viewAllDoctorAppointments(patient);
-                    case 3 ->
-                        takeNearestAppointmentFromDoctor(nearestSlots.get(0).doc, patient, nearestSlots.get(0).getTime());
-                    case 4 ->
-                        takeBetweenNearestAppointmentByIndex(patient, nearestSlots, getIntInput("Index:") - 1);
-                    case 5 -> {
-                        return;
-                    }
-                    default ->
                         System.out.println("Invalid choice. Please try again.");
-                }
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         }
-
     }
-
-    private static void takeBetweenNearestAppointmentByIndex(Patient patient, List<AppointmentSlot> nearestSlots, int i) {
-
-        if (i >= 0 && i <= nearestSlots.size()) {
-            try {
-                appointmentManager.bookAppointment(nearestSlots.get(i).getDoc().getId(), patient, nearestSlots.get(i).time);
-                System.out.println("Succcesfuly appointment taken for the Dr." + nearestSlots.get(i).docName);
-            } catch (Exception e) {
-                System.out.println("Failed to book appointment: " + e.getMessage());
-            }
-        } else {
-            System.out.println("Invalid Number.");
-        }
-
-    }
-
-    private static void takeNearestAppointmentFromDoctor(Doctor doc, Patient patient, LocalDateTime time) {
-        try {
-            appointmentManager.bookAppointment(doc.getId(), patient, time);
-
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return;
-        }
-        System.out.println("\nAppointment Taken Succesfully!");
-    }
-
-    // Helper methods for scheduling appointments
     private static void scheduleNewDays(Doctor doctor) {
         System.out.println("\nChoose number of days to schedule:");
         System.out.println("1. 1 days");
@@ -571,15 +440,15 @@ public class HospitalManagementSystem {
         int daysChoice = getIntInput("Enter your choice: ");
         int days = switch (daysChoice) {
             case 1 ->
-                1;
+                    1;
             case 2 ->
-                2;
+                    2;
             case 3 ->
-                3;
+                    3;
             case 4 ->
-                4;
+                    4;
             case 5 ->
-                5;
+                    5;
 
             default -> {
                 System.out.println("Invalid choice. Returning to menu.");
@@ -596,11 +465,11 @@ public class HospitalManagementSystem {
             int durationChoice = getIntInput("Enter your choice: ");
             int duration = switch (durationChoice) {
                 case 1 ->
-                    10;
+                        10;
                 case 2 ->
-                    15;
+                        15;
                 case 3 ->
-                    30;
+                        30;
                 default -> {
                     System.out.println("Invalid choice. Returning to menu.");
                     yield 0;
@@ -613,7 +482,6 @@ public class HospitalManagementSystem {
             }
         }
     }
-
     private static void cancelSpecificDay(Doctor doctor) {
         System.out.println("Enter date to cancel (yyyy-MM-dd):");
         String dateStr = scanner.nextLine();
@@ -626,7 +494,6 @@ public class HospitalManagementSystem {
             System.out.println("Invalid date format. Please use yyyy-MM-dd");
         }
     }
-
     private static void cancelTimeRange(Doctor doctor) {
         System.out.println("Enter start date and time (yyyy-MM-dd HH:mm):");
         String startStr = scanner.nextLine();
@@ -649,12 +516,9 @@ public class HospitalManagementSystem {
             System.out.println("Invalid date format. Please use yyyy-MM-dd HH:mm");
         }
     }
-
-    //Check if he/she try to previous time
     private static void rearrangeHours(Doctor doctor) {
         System.out.println("Enter date to rearrange (yyyy-MM-dd):");
         String dateStr = scanner.nextLine();
-
         System.out.println("\nChoose new appointment duration:");
         System.out.println("1. 10 minutes");
         System.out.println("2. 15 minutes");
@@ -663,11 +527,11 @@ public class HospitalManagementSystem {
         int durationChoice = getIntInput("Enter your choice: ");
         int duration = switch (durationChoice) {
             case 1 ->
-                10;
+                    10;
             case 2 ->
-                15;
+                    15;
             case 3 ->
-                30;
+                    30;
             default -> {
                 System.out.println("Invalid choice. Returning to menu.");
                 yield 0;
@@ -677,9 +541,6 @@ public class HospitalManagementSystem {
         if (duration > 0) {
             try {
                 LocalDateTime dateTime = LocalDate.parse(dateStr).atStartOfDay();
-                if (dateTime.isBefore(LocalDateTime.now())) {
-                    throw new IllegalArgumentException("Changes must be made at least one day prior.");
-                }
                 appointmentManager.changeAppointmentDuration(doctor, duration, dateTime);
                 System.out.println("Appointments rearranged successfully!");
             } catch (IllegalArgumentException a) {
@@ -689,8 +550,6 @@ public class HospitalManagementSystem {
             }
         }
     }
-
-    // Helper methods for viewing and booking appointments
     private static void viewDoctorAppointments(Doctor doctor) {
         if (doctor != null) {
             List<AppointmentSlot> appointments = appointmentManager.getAllAppointmentsForDoctor(doctor.getId());
@@ -701,7 +560,6 @@ public class HospitalManagementSystem {
             displayAppointmentsByDay(appointments);
         }
     }
-
     private static void viewPatientAppointments(Patient patient) {
         List<AppointmentSlot> appointments = patient.getPatientAppointments();
         if (appointments.isEmpty()) {
@@ -713,52 +571,6 @@ public class HospitalManagementSystem {
             System.out.println(slot);
         }
     }
-
-    private static void showAndBookAppointment(Patient patient, Doctor doctor) {
-        AppointmentSlot nearest = appointmentManager.getNearestAvailableAppointmentSlot(doctor.getId());
-        if (nearest == null) {
-            System.out.println("No available appointments for this doctor.");
-            return;
-        }
-
-        System.out.println("\nNearest available appointment: " + nearest);
-        System.out.println("\n1. Book this appointment");
-        System.out.println("2. See all available appointments");
-        System.out.println("3. Back to menu");
-
-        int choice = getIntInput("Enter your choice: ");
-
-        switch (choice) {
-            case 1 -> {
-                try {
-                    appointmentManager.bookAppointment(doctor.getId(), patient, nearest.getTime());
-                    System.out.println("Appointment booked successfully!");
-                } catch (IllegalArgumentException e) {
-                    System.out.println("Failed to book appointment: " + e.getMessage());
-                }
-            }
-            case 2 -> {
-                List<AppointmentSlot> allSlots = appointmentManager.getAllAppointmentsForDoctor(doctor.getId());
-                displayAvailableAppointments(allSlots);
-
-                int slotIndex = getIntInput("Enter appointment number to book (0 to cancel): ") - 1;
-                if (slotIndex >= 0 && slotIndex < allSlots.size()) {
-                    AppointmentSlot selected = allSlots.get(slotIndex);
-                    if (!selected.isBooked()) {
-                        try {
-                            appointmentManager.bookAppointment(doctor.getId(), patient, selected.getTime());
-                            System.out.println("Appointment booked successfully!");
-                        } catch (IllegalArgumentException e) {
-                            System.out.println("Failed to book appointment: " + e.getMessage());
-                        }
-                    } else {
-                        System.out.println("This slot is already booked.");
-                    }
-                }
-            }
-        }
-    }
-
     private static Doctor selectDoctor() {
         if (doctors == null || doctors.isEmpty()) {
             System.out.println("No doctors available.");
@@ -770,20 +582,19 @@ public class HospitalManagementSystem {
             for (int i = 0; i < doctors.size(); i++) {
                 System.out.println((i + 1) + ". " + doctors.get(i));
             }
-            System.out.println((doctors.size() + 1) + ". Back to previous menu");
+            System.out.println("0. Back to previous menu");
 
             int choice = getIntInput("Select doctor: ");
 
             if (choice > 0 && choice <= doctors.size()) {
                 return doctors.get(choice - 1);
-            } else if (choice == doctors.size() + 1) {
+            } else if (choice == 0) {
                 return null;
             } else {
                 System.out.println("\nInvalid choice. Please try again.");
             }
         }
     }
-
     private static Patient selectPatient() { // Take the list as a parameter
         if (patients == null || patients.isEmpty()) {
             System.out.println("No patients available.");
@@ -811,7 +622,6 @@ public class HospitalManagementSystem {
             }
         }
     }
-
     private static Patient addNewPatient() {
         try {
             System.out.println("Patient Name");
@@ -820,79 +630,51 @@ public class HospitalManagementSystem {
             String surname = scanner.nextLine();
             Patient newPat = new Patient(name);
             patients.add(newPat);
+            patientsHistory.updateList(patients);
             return newPat;
         } catch (Exception e) {
-            System.out.println(e);
+            System.out.println(e.getMessage());
         }
         return null;
     }
+        private static void viewAllDoctorAppointments(Patient patient, int doctorId) {
 
-    private static void bookAppointmentByDoctorName(Patient patient) {
-        System.out.println("Enter doctor name:");
-        String doctorName = scanner.nextLine();
+            while (true) {
+                List<AppointmentSlot> appointments = appointmentManager.getAvailableAppointments(doctorId);
+                if (appointments.isEmpty()) {
+                    System.out.println("No appointments available for this doctor.");
+                    return;
+                }
+                displayAvailableAppointments(appointments);
+                System.out.println("\n1. Book an appointment");
+                System.out.println("2. Back to menu");
 
-        Doctor doctor = findDoctorByName(doctorName);
-        if (doctor != null) {
-            showAndBookAppointment(patient, doctor);
-        } else {
-            System.out.println("Doctor not found.");
-        }
-    }
-
-    //ADD TRY CACTH
-    private static void viewAllDoctorAppointments(Patient patient) {
-        Doctor doctor = selectDoctor();
-        if (doctor != null) {
-            List<AppointmentSlot> appointments = appointmentManager.getNearestAvailableAppointmentSlots(doctor.getId());
-            if (appointments.isEmpty()) {
-                System.out.println("No appointments available for this doctor.");
-                return;
-            }
-
-            displayAvailableAppointments(appointments);
-            System.out.println("\n1. Book an appointment");
-            System.out.println("2. Back to menu");
-
-            int choice = getIntInput("Enter your choice: ");
-            if (choice == 1) {
-                int slotIndex = getIntInput("Enter appointment number to book: ") - 1;
-                if (slotIndex >= 0 && slotIndex < appointments.size()) {
-                    AppointmentSlot selected = appointments.get(slotIndex);
-                    if (!selected.isBooked()) {
-                        try {
-                            appointmentManager.bookAppointment(doctor.getId(), patient, selected.getTime());
-                            System.out.println("Appointment booked successfully!");
-                        } catch (IllegalArgumentException e) {
-                            System.out.println("Failed to book appointment: " + e.getMessage());
-                        }
-                    } else {
-                        System.out.println("This slot is already booked.");
+                int choice = getIntInput("Enter your choice: ");
+                if (choice == 1) {
+                    int slotIndex = getIntInput("Enter appointment number to book: ") - 1;
+                    if (slotIndex < 0 || choice >= appointments.size()) {
+                        throw new IndexOutOfBoundsException("Invalid appointment selection.");
                     }
+                    appointmentManager.bookAppointment(doctorId, patient, appointments.get(choice).getTime());
+                    System.out.println("Appointment booked successfully!");
+                }if (choice==2) {
+                    return;
+                }else{
+                    System.out.println("Invalid Input. Please try again!");
                 }
             }
         }
-    }
-
     private static void showPatientHistory(Patient patient) {
         List<History> histories = patientsHistory.getHistory(patient).stream().toList();
         if (histories.isEmpty()) {
             System.out.println("No history available.");
             return;
         }
-
         System.out.println("\nHistory:");
         for (History history : histories) {
             System.out.println("- " + history);
         }
     }
-
-    private static Doctor findDoctorByName(String name) {
-        return doctors.stream()
-                .filter(d -> d.getName().equalsIgnoreCase(name))
-                .findFirst()
-                .orElse(null);
-    }
-
     private static void displayAppointmentsByDay(List<AppointmentSlot> appointments) {
         Map<LocalDate, List<AppointmentSlot>> appointmentsByDay = new TreeMap<>();
 
@@ -912,7 +694,6 @@ public class HospitalManagementSystem {
             }
         }
     }
-
     private static void displayAvailableAppointments(List<AppointmentSlot> appointments) {
         System.out.println("\nAvailable appointments:");
         int counter = 1;
@@ -931,28 +712,7 @@ public class HospitalManagementSystem {
             }
         }
     }
-
-    private static void displayNearestAppointments(List<AppointmentSlot> appointments) {
-        if (appointments == null || appointments.isEmpty()) {
-            System.out.println("No available appointments found.");
-            return;
-        }
-
-        int counter = 1;
-        for (AppointmentSlot slot : appointments) {
-            String clinicInfo = (slot.getClinic() != null) ? slot.getClinic().toString() : "Not Available";
-            String formattedTime = slot.getTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-            String formattedEndTime = slot.getEndTime().format(DateTimeFormatter.ofPattern("HH:mm"));
-
-            String appointmentDetails = String.format("%d. Dr. %s - Next available: %s - %s - Clinic: %s",
-                    counter, slot.getDocName(), formattedTime, formattedEndTime, clinicInfo);
-
-            System.out.println(appointmentDetails);
-            counter++;
-        }
-    }
-
-    private static int getIntInput(String prompt) {
+       private static int getIntInput(String prompt) {
         while (true) {
             try {
                 System.out.print(prompt);
@@ -962,43 +722,35 @@ public class HospitalManagementSystem {
             }
         }
     }
-
     private static void clinicInsideMenu(Clinic clinic) {
         Scanner scanner = new Scanner(System.in);
-
         while (true) {
             System.out.println("\nWelcome to " + clinic.getDepartmentKey().toString() + " clinic.");
+            System.out.println("---------------------------------");
             System.out.println("1. View Doctors");
             System.out.println("2. Add Doctor");
             System.out.println("3. Delete Doctor");
-            System.out.println("4. View Clinic History");
-            System.out.println("5. View Nearest Available Appointments");
             System.out.println("0. Back to Main Menu");
-
+            System.out.println("---------------------------------");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
 
             switch (choice) {
                 case 1 ->
-                    viewDoctors(clinic);
+                        viewDoctors(clinic);
                 case 2 ->
-                    addDoctor(clinic, scanner);
+                        addDoctor(clinic, scanner);
                 case 3 ->
-                    deleteDoctor(clinic, scanner);
-                case 4 ->
-                    viewClinicHistory(clinic);
-                case 5 ->
-                    viewNearestAppointments(clinic);
+                        deleteDoctor(clinic, scanner);
                 case 0 -> {
                     return; // Go back to the main menu
                 }
                 default ->
-                    System.out.println("Invalid choice. Please try again.");
+                        System.out.println("Invalid choice. Please try again.");
             }
         }
     }
-
     private static void viewDoctors(Clinic clinic) {
         List<Doctor> doctors = clinic.getDoctors();
         if (doctors.isEmpty()) {
@@ -1010,7 +762,6 @@ public class HospitalManagementSystem {
             }
         }
     }
-
     private static void addDoctor(Clinic clinic, Scanner scanner) {
         System.out.print("Enter doctor's name: ");
         String name = scanner.nextLine();
@@ -1020,13 +771,12 @@ public class HospitalManagementSystem {
         try {
             clinic.addDoctor(newDoctor);
             doctors.add(newDoctor);
-            appointmentManager.updateDoctorList(doctors);
+            appointmentManager.update(doctors);
             System.out.println("Doctor added successfully.");
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
     }
-
     private static void deleteDoctor(Clinic clinic, Scanner scanner) {
         viewDoctors(clinic); // Display doctors for selection
         List<Doctor> doctors = clinic.getDoctors();
@@ -1041,36 +791,6 @@ public class HospitalManagementSystem {
             System.out.println("Doctor deleted successfully.");
         } else {
             System.out.println("Invalid doctor number.");
-        }
-    }
-
-    private static void viewClinicHistory(Clinic clinic) {
-        List<History> history = clinic.getHistory();
-        if (history.isEmpty()) {
-            System.out.println("No history recorded for this clinic.");
-        } else {
-            System.out.println("Clinic History:");
-            int i = 0;
-            for (History event : history) {
-                System.out.println(i + "- " + event);
-                i++;
-            }
-        }
-    }
-
-    private static void viewNearestAppointments(Clinic clinic) {
-        if (clinic.appointmentManagerConnection == null) {
-            System.out.println("Appointment Manager is not connected to this clinic.");
-            return;
-        }
-        List<AppointmentSlot> appointments = clinic.getDoctorsNearestAppointment();
-        if (appointments.isEmpty()) {
-            System.out.println("No upcoming appointments found for this clinic's doctors.");
-        } else {
-            System.out.println("Nearest Available Appointments:");
-            for (AppointmentSlot appointment : appointments) {
-                System.out.println(appointment); // Assuming AppointmentSlot has a toString()
-            }
         }
     }
 }
