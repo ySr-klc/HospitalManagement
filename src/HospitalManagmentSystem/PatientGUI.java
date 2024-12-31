@@ -1,12 +1,22 @@
 package HospitalManagmentSystem;
 
+import Persons.Patient;
+import Persons.Doctor;
+import Search.Search;
+import History.History;
+import History.HistoryOfPatient;
+import Clinics.Department;
+import Clinics.ClinicsManager;
+import Appointments.AppointmentManager;
+import Appointments.AppointmentSlot;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 public class PatientGUI extends JFrame {
 
@@ -29,7 +39,7 @@ public class PatientGUI extends JFrame {
         clinicManager = manager;
 
         setTitle("Patient Dashboard - " + patient.getName());
-        setSize(900, 600);
+        setSize(1000, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         initializeComponents();
@@ -168,7 +178,7 @@ public class PatientGUI extends JFrame {
         panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         // Clone the notifications stack to display
-        Stack<String> notifications = (Stack<String>) currentPatient.notifications.clone();
+        Stack<String> notifications = (Stack<String>) currentPatient.getNotifications().clone();
 
         if (notifications.isEmpty()) {
             panel.add(new JLabel("No notifications", SwingConstants.CENTER), BorderLayout.CENTER);
@@ -191,7 +201,7 @@ public class PatientGUI extends JFrame {
         JButton closeButton = new JButton("Close");
 
         clearButton.addActionListener(e -> {
-            currentPatient.notifications.clear();
+            currentPatient.getNotifications().clear();
             updateNotificationBadge();
             dialog.dispose();
         });
@@ -315,7 +325,9 @@ public class PatientGUI extends JFrame {
             try {
                 appointmentManager.bookAppointment(slot.getDoc().getId(), currentPatient, slot.getTime()); // No boolean return
                 JOptionPane.showMessageDialog(this, "Appointment booked successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                
                 refreshCenterPanel();
+                
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Invalid Input", JOptionPane.ERROR_MESSAGE);
             } catch (IllegalStateException ex) {
@@ -375,7 +387,7 @@ public class PatientGUI extends JFrame {
     }
 
     private void updateNotificationBadge() {
-        int count = currentPatient.notifications.size();
+        int count = currentPatient.getNotifications().size();
         notificationBadge.setText(count > 0 ? "(" + count + ")" : "");
     }
 
@@ -385,7 +397,7 @@ public class PatientGUI extends JFrame {
         panel.setBorder(BorderFactory.createEtchedBorder());
 
         panel.add(new JLabel(slot.getTime().format(formatter)));
-        panel.add(new JLabel(slot.docName));
+        panel.add(new JLabel(slot.getDocName()));
         panel.add(new JLabel(slot.getDoc().getSpeciality().toString()));
 
         return panel;
@@ -486,7 +498,6 @@ public class PatientGUI extends JFrame {
                         JOptionPane.showMessageDialog(this, ex.getMessage(), "Booking Error", JOptionPane.ERROR_MESSAGE);
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(this, "An unexpected error occurred: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                        ex.printStackTrace(); // Very important for debugging
                     }
                     refreshAppointments(appointmentsPanel, doctorId);
                 });

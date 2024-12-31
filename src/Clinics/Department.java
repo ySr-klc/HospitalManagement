@@ -1,4 +1,9 @@
-package HospitalManagmentSystem;
+package Clinics;
+
+
+/**
+ * Stores clinic enums
+ */
 public enum Department {
     UROLOGY,
     RADIOLOGY,

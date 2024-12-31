@@ -1,8 +1,15 @@
 
 package HospitalManagmentSystem;
 
+import Persons.Doctor;
+import History.History;
+import History.HistoryOfPatient;
+import Appointments.AppointmentManager;
+import Appointments.AppointmentSlot;
+
 import javax.swing.*;
 import java.awt.*;
+import java.time.DateTimeException;
 import javax.swing.border.EmptyBorder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -149,8 +156,8 @@ private void refreshAppointmentTabs() {
             
             // Set preferred size for better scrolling behavior
             dayPanel.setPreferredSize(new Dimension(
-                appointmentTabs.getWidth() - 50, // Adjust width to account for scroll bar
-                Math.min(500, entry.getValue().size() * 50) // Limit height but allow scrolling
+                appointmentTabs.getWidth() - 50, 
+                Math.min(500, entry.getValue().size() * 50) 
             ));
             
             appointmentTabs.addTab(
@@ -184,7 +191,12 @@ private void refreshAppointmentTabs() {
         scheduleButton.addActionListener(e -> {
             int days = (Integer) daysCombo.getSelectedItem();
             int duration = (Integer) durationCombo.getSelectedItem();
-            appointmentManager.createDoctorAppointments(currentDoctor, days, duration);
+            try {
+                appointmentManager.createDoctorAppointments(currentDoctor, days, duration);
+            } catch (Exception s) {
+                 JOptionPane.showMessageDialog(this, "Error: " + s.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            
             refreshAppointmentTabs();
             dialog.dispose();
         });
@@ -279,7 +291,7 @@ private void refreshAppointmentTabs() {
         
         // Set initial state based on stored value
         
-            if (slot.isPatientCame()) {
+            if (slot.hasPatientAttended()) {
                 attendedButton.setSelected(true);
             } else {
                 notAttendedButton.setSelected(true);
@@ -315,7 +327,7 @@ private void refreshAppointmentTabs() {
         saveButton.addActionListener(e -> {
             // Save attendance
             if (attendedButton.isSelected() || notAttendedButton.isSelected()) {
-                slot.setIsPatientCame(attendedButton.isSelected());
+                slot.setPatientAttended(attendedButton.isSelected());
             }
             
             // Save diagnosis if attended
@@ -388,7 +400,10 @@ private void refreshAppointmentTabs() {
                 appointmentManager.changeAppointmentDuration(currentDoctor, duration, dateTime);
                 refreshAppointmentTabs();
                 JOptionPane.showMessageDialog(this, "Duration changed successfully!");
-            } catch (Exception ex) {
+            }catch(DateTimeException s){
+                JOptionPane.showMessageDialog(this, "Error: Invalid Format please try again!(YYYY-MM-DD)", 
+                                           "Error", JOptionPane.ERROR_MESSAGE);
+            }  catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), 
                                            "Error", JOptionPane.ERROR_MESSAGE);
             }
@@ -417,6 +432,9 @@ private void refreshAppointmentTabs() {
                 appointmentManager.cancelDoctorDay(currentDoctor.getId(), dateTime);
                 refreshAppointmentTabs();
                 JOptionPane.showMessageDialog(this, "Day cancelled successfully!");
+            }catch(DateTimeException s){
+                JOptionPane.showMessageDialog(this, "Error: Invalid Format please try again!(YYYY-MM-DD)", 
+                                           "Error", JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), 
                                            "Error", JOptionPane.ERROR_MESSAGE);
@@ -458,7 +476,10 @@ private void refreshAppointmentTabs() {
                 }
                 refreshAppointmentTabs();
                 JOptionPane.showMessageDialog(this, "Time range cancelled successfully!");
-            } catch (Exception ex) {
+            }catch(DateTimeException s){
+                JOptionPane.showMessageDialog(this, "Error: Invalid Format please try again!(YYYY-MM-DD HH:mm)", 
+                                           "Error", JOptionPane.ERROR_MESSAGE);
+            }  catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), 
                                            "Error", JOptionPane.ERROR_MESSAGE);
             }

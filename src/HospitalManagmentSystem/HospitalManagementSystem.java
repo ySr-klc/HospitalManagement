@@ -1,6 +1,18 @@
 
 package HospitalManagmentSystem;
 
+import SystemInitializer.FileInputTaker;
+import Persons.Patient;
+import Persons.Doctor;
+import Search.Search;
+import History.History;
+import History.HistoryOfPatient;
+import Clinics.Department;
+import Clinics.Clinic;
+import Clinics.ClinicsManager;
+import Appointments.AppointmentManager;
+import Appointments.AppointmentSlot;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -21,16 +33,16 @@ public class HospitalManagementSystem {
         doctors = FileInputTaker.readDoctorsFromFile("doctors.txt");
         doctors.sort(Comparator.comparing(Doctor::getSpeciality));
         patients = new ArrayList<>();
-        patients.add(new Patient("Alice"));
-        patients.add(new Patient("Bob"));
+        patients.add(new Patient("Yasir Kilic"));
+        patients.add(new Patient("Berkay Simsek"));
        
         clinicManager = new ClinicsManager(doctors);
         patientsHistory = new HistoryOfPatient(patients);
-        appointmentManager = new AppointmentManager(doctors, patientsHistory);
+        appointmentManager = new AppointmentManager(doctors);
         searchPanel = new Search(doctors);
         clinicManager.connectAppointmentManager(appointmentManager);
         try {
-            FileInputTaker.generatePatientHistories(doctors, patients, "diagnoses.txt", patientsHistory);
+            FileInputTaker.generatePatientHistories(doctors, patients, "diagnoses.txt");
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }   
@@ -164,12 +176,12 @@ public class HospitalManagementSystem {
         System.out.println("2.No");
         int choice = getIntInput("Enter your choice: ");
         if (choice == 2) {
-            slot.setIsPatientCame(false);
+            slot.setPatientAttended(false);
             System.out.println("Thank for your time");
             appointmentManager.passedAppointmentHandler(slot);
         } else if (choice == 1) {
             while(true){
-            slot.setIsPatientCame(true);
+            slot.setPatientAttended(true);
             System.out.println("1. Add diagnose and finish");
             System.out.println("2. Return back menu");
             choice = getIntInput("Enter your choice: ");
@@ -308,7 +320,7 @@ public class HospitalManagementSystem {
 
             int doctorId = searchResult.get(choice).getValue();
             AppointmentSlot doctorAppointments = appointmentManager.getNearestAvailableAppointmentSlot(doctorId);
-            System.out.println("Nearest appointment for Dr."+doctorAppointments.docName+" at Time"+doctorAppointments.getTime().format(formatter));
+            System.out.println("Nearest appointment for Dr."+doctorAppointments.getDocName()+" at Time"+doctorAppointments.getTime().format(formatter));
             System.out.println("1. Select nearst appointment");
             System.out.println("2. View avaliable appointments");
             System.out.println("3. Back to main");
@@ -405,7 +417,7 @@ public class HospitalManagementSystem {
         }
     }
     private static void showPatientNotifications(Patient patient) {
-        Stack<String> not = (Stack<String>) patient.notifications.clone();
+        Stack<String> not = (Stack<String>) patient.getNotifications().clone();
         if (not.isEmpty()) {
             System.out.println("\n There is no notification yet!");
             return;
@@ -420,7 +432,7 @@ public class HospitalManagementSystem {
             int choice = getIntInput("Enter your choice: ");
             switch (choice) {
                 case 1 ->
-                        patient.notifications.clear();
+                        patient.getNotifications().clear();
                 case 2 -> {
                     return;
                 }

@@ -1,13 +1,30 @@
 package HospitalManagmentSystem;
 
+import SystemInitializer.FileInputTaker;
+import DoctorListUpdater.DoctorObserverHandler;
+import Persons.Patient;
+import Persons.Doctor;
+import Search.Search;
+import History.HistoryOfPatient;
+import Clinics.Department;
+import Clinics.ClinicsManager;
+import Appointments.AppointmentManager;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import javax.swing.border.EmptyBorder;
 import java.util.List;
 import java.util.Random;
 
+
+/**
+ * 
+ * @author ysr
+ */
 public class MainGUI extends JFrame {
     private JPanel mainPanel;
     private CardLayout cardLayout;
@@ -20,16 +37,16 @@ public class MainGUI extends JFrame {
     
      static {
         // Initialize sample data
-        List<Doctor> doctorsTemporary = FileInputTaker.readDoctorsFromFile("doctors.txt");
+        List<Doctor> tempraryDoctors= FileInputTaker.readDoctorsFromFile("doctors.txt");
         
-        doctors = new DoctorObserverHandler(doctorsTemporary);
+        doctors = new DoctorObserverHandler(tempraryDoctors);
         patients = new ArrayList<>();
-        patients.add(new Patient("Alice"));
-        patients.add(new Patient("Bob"));
+        patients.add(new Patient("Yasir Kilic"));
+        patients.add(new Patient("Berkay Simsek"));
        
         clinicManager = new ClinicsManager(doctors.getDoctors());
         patientsHistory = new HistoryOfPatient(patients);
-        appointmentManager = new AppointmentManager(doctors.getDoctors(), patientsHistory);
+        appointmentManager = new AppointmentManager(doctors.getDoctors());
         searchPanel = new Search(doctors.getDoctors());
         clinicManager.connectAppointmentManager(appointmentManager);
         
@@ -37,7 +54,7 @@ public class MainGUI extends JFrame {
         doctors.addObserver(clinicManager);
         doctors.addObserver(appointmentManager);
         try {
-            FileInputTaker.generatePatientHistories(doctors.getDoctors(), patients, "diagnoses.txt", patientsHistory);
+            FileInputTaker.generatePatientHistories(doctors.getDoctors(), patients, "diagnoses.txt");
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }   
@@ -149,7 +166,7 @@ public class MainGUI extends JFrame {
         buttonPanel.add(selectButton);
         buttonPanel.add(backButton);
 
-        // Center panel for combo box
+      
         JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         centerPanel.add(clinicCombo);
 
@@ -167,9 +184,11 @@ public class MainGUI extends JFrame {
     titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
     panel.add(titleLabel, BorderLayout.NORTH);
 
-    // Create doctor list model
-    DefaultListModel<Doctor> doctorListModel = new DefaultListModel<>();
-    doctors.getDoctors().forEach(doctorListModel::addElement);
+ 
+   DefaultListModel<Doctor> doctorListModel = new DefaultListModel<>();
+List<Doctor> sortedDoctors = new ArrayList<>(doctors.getDoctors()); 
+Collections.sort(sortedDoctors, Comparator.comparing(Doctor::getSpeciality)); 
+sortedDoctors.forEach(doctorListModel::addElement);
 
     JList<Doctor> doctorList = new JList<>(doctorListModel);
     doctorList.setCellRenderer(new DefaultListCellRenderer() {
@@ -230,7 +249,7 @@ public class MainGUI extends JFrame {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         panel.add(titleLabel, BorderLayout.NORTH);
 
-        // Create patient list model
+      
         DefaultListModel<Patient> patientListModel = new DefaultListModel<>();
         patients.forEach(patientListModel::addElement);
 
@@ -275,7 +294,7 @@ public class MainGUI extends JFrame {
         return panel;
     }
 
-    // Add window listener to handle sub-GUI closures
+   
     private void addSubGUIListener(JFrame subGUI) {
         subGUI.addWindowListener(new WindowAdapter() {
             @Override
